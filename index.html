@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ScenarioControl: Vision-Language Controllable Vectorized Latent Scenario Generation</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --bg-strong: #f8f8f8;
+            --surface: #ffffff;
+            --surface-strong: #fafafa;
+            --line: #e8e8e8;
+            --text: #1a1a1a;
+            --muted: #777777;
+            --accent: #1f1f1f;
+            --accent-soft: #f5f5f5;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+            --radius-xl: 0px;
+            --radius-lg: 0px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            color: var(--text);
+            background: var(--bg);
+            line-height: 1.7;
+        }
+
+        a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .page-shell {
+            width: min(1000px, calc(100vw - 40px));
+            margin: 0 auto;
+            padding: 0;
+        }
+
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 24px;
+            padding: 24px 0;
+            margin-bottom: 0;
+            border: none;
+            background: rgba(255, 255, 255, 0.99);
+            backdrop-filter: none;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .brand {
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 0;
+            text-transform: none;
+            font-family: inherit;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--muted);
+            font-size: 0.95rem;
+            font-weight: 400;
+            transition: color 200ms ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        .hero {
+            position: relative;
+            overflow: hidden;
+            padding: 80px 0 60px;
+            border: none;
+            border-radius: 0;
+            background: var(--bg);
+            box-shadow: none;
+            text-align: center;
+        }
+
+        .hero::before,
+        .hero::after {
+            display: none;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 0;
+            border: 1px solid var(--line);
+            background: transparent;
+            color: var(--muted);
+            font-size: 0.8rem;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            font-family: inherit;
+            margin: 0 auto 20px;
+            display: flex;
+            justify-content: center;
+            width: fit-content;
+        }
+
+        h1 {
+            max-width: none;
+            margin: 20px 0 12px;
+            font-family: inherit;
+            font-size: 2.5rem;
+            line-height: 1.15;
+            font-weight: 600;
+            letter-spacing: -0.015em;
+            text-align: center;
+        }
+
+        .hero-subtitle {
+            max-width: 900px;
+            margin: 0 auto 28px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 1.05rem;
+            line-height: 1.6;
+            font-weight: 400;
+        }
+
+        .authors,
+        .venue {
+            text-align: center;
+            margin: 0;
+        }
+
+        .authors {
+            font-size: 1rem;
+            font-weight: 400;
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+
+        .venue {
+            color: var(--muted);
+            font-size: 0.95rem;
+            margin-bottom: 32px;
+        }
+
+        .action-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 60px;
+        }
+
+        .action-row a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 999px;
+            border: 1px solid #5f5f5f;
+            background: #5f5f5f;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #ffffff;
+            transition: transform 150ms ease, opacity 150ms ease;
+        }
+
+        .btn-icon {
+            width: 14px;
+            height: 14px;
+            display: inline-block;
+            fill: currentColor;
+            flex: 0 0 auto;
+        }
+
+        .btn-icon-img {
+            width: 14px;
+            height: 14px;
+            object-fit: contain;
+            display: inline-block;
+            flex: 0 0 auto;
+            border-radius: 2px;
+        }
+
+        .arxiv-icon {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.2);
+            border-radius: 3px;
+            padding: 1px;
+        }
+
+        .action-row a:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 40px;
+            align-items: center;
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        .video-card,
+        .info-card,
+        .section-panel,
+        .stat,
+        .citation {
+            border: none;
+            background: var(--surface);
+            backdrop-filter: none;
+            box-shadow: none;
+        }
+
+        .video-card {
+            padding: 0;
+            border-radius: 0;
+        }
+
+        .video-card video {
+            width: 100%;
+            display: block;
+            border-radius: 0;
+            background: #000;
+            margin-bottom: 16px;
+        }
+
+        .video-caption {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 0;
+            color: var(--muted);
+            font-size: 0.9rem;
+            padding: 0;
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        .info-card {
+            display: grid;
+            gap: 24px;
+            padding: 0;
+            border-radius: 0;
+            text-align: center;
+        }
+
+        .info-card h2,
+        .section-panel h2,
+        .citation h2 {
+            margin: 0;
+            font-size: 1.8rem;
+            letter-spacing: 0;
+            text-transform: none;
+            font-weight: 600;
+            font-family: inherit;
+            text-align: center;
+        }
+
+        .info-card p,
+        .section-panel p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 1rem;
+            line-height: 1.7;
+            text-align: justify;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .mini-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .stat {
+            padding: 0;
+            border-radius: 0;
+            border: none;
+            background: transparent;
+            box-shadow: none;
+            text-align: center;
+        }
+
+        .stat strong {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+            line-height: 1;
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .stat span {
+            color: var(--muted);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            display: block;
+        }
+
+        .content-stack {
+            display: grid;
+            gap: 60px;
+            margin-top: 60px;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .section-panel {
+            padding: 0;
+            border-radius: 0;
+            border: none;
+            background: transparent;
+            box-shadow: none;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .section-heading {
+            display: grid;
+            gap: 24px;
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        .section-heading p {
+            max-width: none;
+            font-size: 1rem;
+            line-height: 1.7;
+            margin: 0;
+            text-align: center;
+        }
+
+        .section-heading h2 {
+            margin: 0;
+            text-align: center;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 32px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            padding: 0;
+            border-radius: 0;
+            border: none;
+            background: transparent;
+            text-align: center;
+        }
+
+        .feature-card h3 {
+            margin: 0 0 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: inherit;
+            text-align: center;
+        }
+
+        .feature-card p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.95rem;
+            line-height: 1.7;
+            text-align: justify;
+        }
+
+        .bullet-list {
+            display: grid;
+            gap: 32px;
+            margin: 32px auto 0;
+            padding: 0;
+            list-style: none;
+            max-width: 900px;
+        }
+
+        .bullet-list li {
+            padding: 0;
+            border-radius: 0;
+            border: none;
+            background: transparent;
+            font-size: 1rem;
+            line-height: 1.7;
+            text-align: justify;
+        }
+
+        .bullet-list li:last-child {
+            border-bottom: none;
+        }
+
+        .bullet-list strong {
+            display: inline;
+            margin-bottom: 0;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+
+        .citation {
+            padding: 0;
+            border-radius: 0;
+            border: none;
+            background: transparent;
+            box-shadow: none;
+            max-width: 900px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        pre {
+            margin: 16px auto 0;
+            padding: 16px;
+            overflow-x: auto;
+            border-radius: 0;
+            background: var(--bg-strong);
+            color: var(--text);
+            font-size: 0.9rem;
+            line-height: 1.6;
+            border: 1px solid var(--line);
+            font-family: 'Monaco', 'Menlo', monospace;
+            text-align: left;
+            max-width: 900px;
+        }
+
+        .footer-note {
+            margin-top: 40px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        .authors-section {
+            margin-top: 24px;
+            text-align: center;
+        }
+
+        .authors-list {
+            font-size: 0.95rem;
+            line-height: 1.8;
+            margin: 0;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .authors-list sup {
+            font-size: 0.75rem;
+            vertical-align: super;
+            margin: 0 1px;
+        }
+
+        .affiliations {
+            font-size: 0.9rem;
+            color: var(--muted);
+            margin-top: 12px;
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        .affiliation-item {
+            margin-bottom: 4px;
+        }
+
+        .affiliation-item sup {
+            font-size: 0.75rem;
+            vertical-align: super;
+            margin-right: 4px;
+            font-weight: 500;
+        }
+
+        .method-figure {
+            max-width: 100%;
+            margin: 40px 0 0;
+            text-align: center;
+            width: 100%;
+        }
+
+        .method-figure img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .result-figure {
+            width: 100%;
+            margin: 0 0 48px;
+        }
+
+        .result-figure:last-child {
+            margin-bottom: 0;
+        }
+
+        .result-figure h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0 0 16px;
+            text-align: center;
+        }
+
+        .result-figure img,
+        .result-figure iframe {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .result-figure iframe {
+            height: 600px;
+            border: 1px solid var(--line);
+        }
+
+        @media (max-width: 980px) {
+            .hero {
+                padding: 60px 0 40px;
+            }
+
+            .hero-grid,
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+
+            .section-heading {
+                display: grid;
+            }
+
+            .mini-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .page-shell {
+                width: min(100vw - 40px, 1000px);
+            }
+        }
+
+        @media (max-width: 720px) {
+            .page-shell {
+                width: min(100vw - 20px, 1000px);
+                padding: 0;
+            }
+
+            .topbar {
+                padding: 16px 0;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+
+            .nav-links {
+                gap: 16px;
+                width: 100%;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .mini-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .two-column {
+                gap: 20px;
+            }
+
+            .video-caption {
+                flex-direction: column;
+            }
+
+            .action-row {
+                gap: 12px;
+            }
+
+            .content-stack {
+                gap: 40px;
+                margin-top: 40px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="page-shell">
+    <!-- <nav class="topbar">
+        <div class="brand">ScenarioControl</div>
+        <div class="nav-links">
+            <a href="#overview">Overview</a>
+            <a href="#method">Method</a>
+            <a href="#results">Results</a>
+            <a href="#citation">Citation</a>
+        </div>
+    </nav> -->
+
+    <section class="hero" id="overview">
+        <h1>ScenarioControl: Vision-language Controllable Vectorized Latent Scenario Generation</h1>
+        <!-- <p class="hero-subtitle">
+            Vision-language controllable vectorized latent scenario generation for long-horizon,
+            realistic, and reactive 3D driving rollouts.
+        </p> -->
+
+        <div class="authors-section">
+            <p class="authors-list">
+                Lili Gao<sup>1</sup>,
+                Yanbo Xu<sup>1</sup>,
+                William Alexander Koch<sup>1</sup>,
+                Samuele Ruffino<sup>1</sup>,
+                Dmitriy Rivkin<sup>1</sup>,
+                Luke Rowe<sup>3</sup>,
+                Behdad Chalaki<sup>1</sup>,
+                Roger Girgis<sup>1,3</sup>,
+                Julian Ost<sup>1,2</sup>,
+                Mario Bijelic<sup>1,2</sup>,
+                Felix Heide<sup>1,2</sup>
+            </p>
+            <div class="affiliations">
+                <div class="affiliation-item"><sup>1</sup>Torc Robotics</div>
+                <div class="affiliation-item"><sup>2</sup>Princeton University</div>
+                <div class="affiliation-item"><sup>3</sup>MILA University</div>
+            </div>
+        </div>
+
+        <p class="venue"></p>
+
+        <div class="action-row">
+            <a href="#">
+                <svg class="btn-icon" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M4 0h5l4 4v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V1a1 1 0 0 1 1-1zm4 1.5V4h2.5L8 1.5zM5 9.5h1.2c.9 0 1.3.5 1.3 1.2 0 .8-.5 1.2-1.3 1.2H5V9.5zm1.2 1.7c.3 0 .5-.2.5-.5s-.2-.5-.5-.5h-.4v1h.4zm1.8-1.7h1.3c.8 0 1.3.4 1.3 1.1 0 .4-.2.7-.5.9l.7 1.3h-.9l-.6-1.1h-.4v1.1H8V9.5zm1.3 1.5c.3 0 .5-.1.5-.4s-.2-.4-.5-.4h-.4v.8h.4z"/>
+                </svg>
+                Paper
+            </a>
+            <a href="#">
+                <img class="btn-icon-img arxiv-icon" src="https://assets.streamlinehq.com/image/private/w_300,h_300,ar_1/f_auto/v1/icons/logos/arxiv-wshkqinh4e441g48f8wlh.png/arxiv-nn7v4eens4rwl6nqq4jhi.png?_a=DATAiZAAZAA0" alt="arXiv logo">
+                arXiv
+            </a>
+            <a href="#">
+                <svg class="btn-icon" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.65 7.65 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+                </svg>
+                Code
+            </a>
+        </div>
+
+        <div class="hero-grid">
+            <div class="video-card" id="teaser">
+                <video autoplay loop playsinline muted>
+                    <source src="media/video_teaser_eccv.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <div class="video-caption">
+                    <span>We illustrate text- and image-controlled scenario generation, and show how a globally consistent long-horizon scene graph enables re-rendering from any actor viewpoint by changing only the camera pose.</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <main class="content-stack">
+        <section class="section-panel" id="abstract">
+            <div class="section-heading">
+                <h2>Summary</h2>
+            </div>
+            <p>
+                We propose ScenarioControl, a vision-language control mechanism for learned driving scenario generation.
+                Given a text prompt or an input image, the model synthesizes diverse and realistic 3D scenario rollouts,
+                including map structure, dynamic agents, pedestrians, infrastructure, and ego-view observations.
+                The model operates in a vectorized latent space that jointly represents road layout and actor dynamics.
+            </p>
+            <p style="margin-top: 16px;">
+                We model scenes as variable-length vector tokens and condition generation with text, image, and depth signals.
+                A gated cross-global control mechanism combines dense cross-attention with a compact global-context route,
+                enabling controllable edits while preserving topology, geometric consistency, and long-range rollout coherence.
+            </p>
+        </section>
+
+        <section class="section-panel" id="method">
+            <div class="section-heading">
+                <h2>Method</h2>
+            </div>
+
+            <p>
+                ScenarioControl generates initial scenes with a controllable latent diffusion model conditioned on text prompts or agent-view images.
+                We use a gated cross-global control mechanism to fuse dense conditioning signals with
+                sparse scene tokens, and a count-injection head for controlling lane and agent cardinality. The generated scenario is
+                then rolled out with behavior simulation and projected into camera space to condition LoRA-adapted Wan 2.2
+                for photorealistic video generation and continuation.
+            </p>
+
+            <div class="method-figure">
+                <img src="media/method_figure_v3.png" alt="Method Overview">
+            </div>
+
+            <div class="method-figure">
+                <img src="media/video_generation_v3.png" alt="Video Generation">
+            </div>
+        </section>
+
+        <section class="section-panel" id="results">
+            <div class="section-heading">
+                <h2>Results</h2>
+            </div>
+            <p style="margin-bottom: 30px;">
+                We visualize initial scenes generated via ScenarioControl under both image and text conditioning, alongside
+                video rendering of the resulting driving rollouts. Across conditions, the method produces diverse and
+                realistic 3D scenarios with consistent road geometry, plausible agent behavior, and coherent ego-view
+                observations. 
+            </p>
+
+            <div class="result-figure">
+                <h3>Image-Conditioned Scene Generation</h3>
+                <img src="media/img2scenario_v4 (1).png" alt="Image-conditioned scene generation results">
+            </div>
+
+            <div class="result-figure">
+                <h3>Text-Conditioned Scene Generation</h3>
+                <img src="media/text_scenario_v2.6.png" alt="Text-conditioned scene generation results">
+            </div>
+
+            <div class="result-figure">
+                <h3>Video Generation Samples</h3>
+                <img src="media/video_generation_samples_v3.png" alt="Video generation sample results">
+            </div>
+        </section>
+
+        <section class="citation" id="citation">
+            <h2>BibTeX</h2>
+            <pre>@misc{scenariocontrol2026,
+  title = {ScenarioControl: Vision-Language Controllable Vectorized 
+           Latent Scenario Generation},
+    author = {Gao, Lili and Xu, Yanbo and Koch, William Alexander and
+                        Ruffino, Samuele and Rivkin, Dmitriy and Rowe, Luke and
+                        Chalaki, Behdad and Girgis, Roger and Ost, Julian and
+                        Bijelic, Mario and Heide, Felix},
+  year = {2026},
+  note = {Project page}
+}</pre>
+        </section>
+    </main>
+
+    <p class="footer-note">
+        This static page was restyled to match the reference site's academic project-page structure, with a strong title block,
+        publication actions, wide media presentation, and glass-panel content sections.
+    </p>
+</div>
+</body>
+</html>

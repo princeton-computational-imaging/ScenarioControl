@@ -537,6 +537,7 @@
         }
 
         .result-figure img,
+        .result-figure video,
         .result-figure iframe {
             width: 100%;
             height: auto;
@@ -575,6 +576,23 @@
             .page-shell {
                 width: min(100vw - 20px, 1000px);
                 padding: 0;
+            }
+
+            .hero {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+
+            .hero-grid,
+            .video-card,
+            .authors-section,
+            .authors-list {
+                width: 100%;
+                margin-left: auto;
+                margin-right: auto;
+                text-align: center;
             }
 
             .topbar {
@@ -640,8 +658,8 @@
         <div class="authors-section">
             <p class="authors-list">
                 Lili Gao<sup>1</sup>,
-                Yanbo Xu<sup>1</sup>,
-                William Alexander Koch<sup>1</sup>,
+                Yanbo Xu<sup>2</sup>,
+                William Alexander Koch<sup>2</sup>,
                 Samuele Ruffino<sup>1</sup>,
                 Dmitriy Rivkin<sup>1</sup>,
                 Luke Rowe<sup>3</sup>,
@@ -654,7 +672,7 @@
             <div class="affiliations">
                 <div class="affiliation-item"><sup>1</sup>Torc Robotics</div>
                 <div class="affiliation-item"><sup>2</sup>Princeton University</div>
-                <div class="affiliation-item"><sup>3</sup>MILA University</div>
+                <div class="affiliation-item"><sup>3</sup>MILA</div>
             </div>
         </div>
 
@@ -686,7 +704,7 @@
                     Your browser does not support the video tag.
                 </video>
                 <div class="video-caption">
-                    <span>We illustrate text- and image-controlled scenario generation, and show how a globally consistent long-horizon scene graph enables re-rendering from any actor viewpoint by changing only the camera pose.</span>
+                    <span>ScenarioControl, a vision-language control mechanism for learned driving scenario generation.</span>
                 </div>
             </div>
         </div>
@@ -698,7 +716,6 @@
                 <h2>Summary</h2>
             </div>
             <p>
-                We propose ScenarioControl, a vision-language control mechanism for learned driving scenario generation.
                 Given a text prompt or an input image, the model synthesizes diverse and realistic 3D scenario rollouts,
                 including map structure, dynamic agents, pedestrians, infrastructure, and ego-view observations.
                 The model operates in a vectorized latent space that jointly represents road layout and actor dynamics.
@@ -742,6 +759,7 @@
                 realistic 3D scenarios with consistent road geometry, plausible agent behavior, and coherent ego-view
                 observations. 
             </p>
+ 
 
             <div class="result-figure">
                 <h3>Image-Conditioned Scene Generation</h3>
@@ -749,14 +767,40 @@
             </div>
 
             <div class="result-figure">
-                <h3>Text-Conditioned Scene Generation</h3>
-                <img src="media/text_scenario_v2.6.png" alt="Text-conditioned scene generation results">
+                <!-- <h3>Image-Conditioned Video</h3> -->
+                <video autoplay loop playsinline muted preload="metadata">
+                    <source src="media/image-conditioned.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
             </div>
 
             <div class="result-figure">
+                <h3>Text-Conditioned Scene Generation</h3>
+                <img src="media/text_scenario_v2.6.png" alt="Text-conditioned scene generation results">
+            </div>
+            
+            <div class="result-figure">
+                <!-- <h3>Text-Conditioned Video</h3> -->
+                <video autoplay loop playsinline muted preload="metadata">
+                    <source src="media/text-conditioned.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+            
+
+            <div class="result-figure">
+                <h3>Firstframe-Conditioned Video</h3>
+                <video autoplay loop playsinline muted preload="metadata">
+                    <source src="media/firstframe-conditioned.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+
+
+            <!-- <div class="result-figure">
                 <h3>Video Generation Samples</h3>
                 <img src="media/video_generation_samples_v3.png" alt="Video generation sample results">
-            </div>
+            </div> -->
         </section>
 
         <section class="citation" id="citation">

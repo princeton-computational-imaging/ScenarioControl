@@ -5,19 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ScenarioControl: Vision-Language Controllable Vectorized Latent Scenario Generation</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700&display=swap');
+
         :root {
-            --bg: #ffffff;
-            --bg-strong: #f8f8f8;
+            --bg: #f5f4ef;
+            --bg-strong: #eeece4;
             --surface: #ffffff;
-            --surface-strong: #fafafa;
-            --line: #e8e8e8;
-            --text: #1a1a1a;
-            --muted: #777777;
-            --accent: #1f1f1f;
-            --accent-soft: #f5f5f5;
-            --shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
-            --radius-xl: 0px;
-            --radius-lg: 0px;
+            --surface-strong: #fbfaf6;
+            --line: #ddd8cc;
+            --text: #1f292c;
+            --muted: #5e676a;
+            --accent: #2f4f78;
+            --accent-soft: #eaf1fb;
+            --shadow: 0 12px 30px rgba(24, 35, 39, 0.08);
+            --radius-xl: 24px;
+            --radius-lg: 16px;
+            --content-width: 860px;
         }
 
         * {
@@ -30,7 +33,7 @@
 
         body {
             margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            font-family: 'Manrope', 'Segoe UI', sans-serif;
             color: var(--text);
             background: var(--bg);
             line-height: 1.7;
@@ -59,12 +62,13 @@
             align-items: baseline;
             justify-content: space-between;
             gap: 24px;
-            padding: 24px 0;
+            padding: 16px 18px;
             margin-bottom: 0;
-            border: none;
-            background: rgba(255, 255, 255, 0.99);
-            backdrop-filter: none;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--line);
+            border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+            background: rgba(250, 249, 244, 0.9);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 8px 20px rgba(24, 35, 39, 0.06);
         }
 
         .brand {
@@ -99,16 +103,40 @@
             position: relative;
             overflow: hidden;
             padding: 80px 0 60px;
-            border: none;
-            border-radius: 0;
-            background: var(--bg);
-            box-shadow: none;
+            border: 1px solid var(--line);
+            border-radius: var(--radius-xl);
+            background: linear-gradient(135deg, #fffdf8 0%, #f1f4ee 46%, #edf4f6 100%);
+            box-shadow: var(--shadow);
             text-align: center;
         }
 
         .hero::before,
         .hero::after {
-            display: none;
+            content: "";
+            position: absolute;
+            width: 360px;
+            height: 360px;
+            border-radius: 50%;
+            z-index: 0;
+            pointer-events: none;
+            filter: blur(2px);
+        }
+
+        .hero::before {
+            right: -120px;
+            top: -120px;
+            background: radial-gradient(circle, rgba(32, 78, 90, 0.15) 0%, rgba(32, 78, 90, 0) 70%);
+        }
+
+        .hero::after {
+            left: -120px;
+            bottom: -140px;
+            background: radial-gradient(circle, rgba(201, 133, 84, 0.14) 0%, rgba(201, 133, 84, 0) 70%);
+        }
+
+        .hero>* {
+            position: relative;
+            z-index: 1;
         }
 
         .eyebrow {
@@ -134,11 +162,11 @@
         h1 {
             max-width: none;
             margin: 20px 0 12px;
-            font-family: inherit;
+            font-family: 'Fraunces', 'Times New Roman', serif;
             font-size: 2.5rem;
             line-height: 1.15;
-            font-weight: 600;
-            letter-spacing: -0.015em;
+            font-weight: 700;
+            letter-spacing: -0.01em;
             text-align: center;
         }
 
@@ -184,15 +212,15 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            padding: 6px 14px;
+            padding: 8px 16px;
             border-radius: 999px;
-            border: 1px solid #5f5f5f;
-            background: #5f5f5f;
+            border: 1px solid var(--accent);
+            background: var(--accent);
             text-decoration: none;
             font-weight: 600;
             font-size: 0.95rem;
             color: #ffffff;
-            transition: transform 150ms ease, opacity 150ms ease;
+            transition: transform 180ms ease, box-shadow 180ms ease, opacity 150ms ease;
         }
 
         .btn-icon {
@@ -220,8 +248,9 @@
         }
 
         .action-row a:hover {
-            opacity: 0.9;
             transform: translateY(-1px);
+            box-shadow: 0 8px 18px rgba(32, 78, 90, 0.25);
+            opacity: 0.96;
         }
 
         .hero-grid {
@@ -284,8 +313,8 @@
             font-size: 1.8rem;
             letter-spacing: 0;
             text-transform: none;
-            font-weight: 600;
-            font-family: inherit;
+            font-weight: 700;
+            font-family: 'Fraunces', 'Times New Roman', serif;
             text-align: center;
         }
 
@@ -296,7 +325,7 @@
             font-size: 1rem;
             line-height: 1.7;
             text-align: justify;
-            max-width: 800px;
+            max-width: var(--content-width);
             margin-left: auto;
             margin-right: auto;
         }
@@ -338,25 +367,26 @@
             display: grid;
             gap: 60px;
             margin-top: 60px;
-            max-width: 900px;
+            max-width: var(--content-width);
             margin-left: auto;
             margin-right: auto;
+            margin-bottom: 32px;
         }
 
         .section-panel {
-            padding: 0;
-            border-radius: 0;
-            border: none;
-            background: transparent;
-            box-shadow: none;
-            max-width: 900px;
+            padding: 28px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--line);
+            background: var(--surface);
+            box-shadow: var(--shadow);
+            max-width: var(--content-width);
             margin: 0 auto;
         }
 
         .section-heading {
             display: grid;
             gap: 24px;
-            margin-bottom: 32px;
+            margin-bottom: 24px;
             text-align: center;
         }
 
@@ -377,7 +407,7 @@
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 32px;
-            max-width: 900px;
+            max-width: var(--content-width);
             margin: 0 auto;
         }
 
@@ -411,7 +441,7 @@
             margin: 32px auto 0;
             padding: 0;
             list-style: none;
-            max-width: 900px;
+            max-width: var(--content-width);
         }
 
         .bullet-list li {
@@ -441,7 +471,7 @@
             border: none;
             background: transparent;
             box-shadow: none;
-            max-width: 900px;
+            max-width: var(--content-width);
             margin: 0 auto;
             text-align: center;
         }
@@ -458,7 +488,7 @@
             border: 1px solid var(--line);
             font-family: 'Monaco', 'Menlo', monospace;
             text-align: left;
-            max-width: 900px;
+            max-width: var(--content-width);
         }
 
         .footer-note {
@@ -477,7 +507,7 @@
             font-size: 0.95rem;
             line-height: 1.8;
             margin: 0;
-            max-width: 900px;
+            max-width: var(--content-width);
             margin-left: auto;
             margin-right: auto;
         }
@@ -509,9 +539,13 @@
 
         .method-figure {
             max-width: 100%;
-            margin: 40px 0 0;
+            margin: 32px 0 0;
             text-align: center;
             width: 100%;
+            border: 1px solid var(--line);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            background: var(--surface-strong);
         }
 
         .method-figure img {
@@ -534,6 +568,15 @@
             font-weight: 600;
             margin: 0 0 16px;
             text-align: center;
+            font-family: 'Fraunces', 'Times New Roman', serif;
+            letter-spacing: 0.01em;
+        }
+
+        .result-figure .video-caption-regular {
+            font-size: 1.1rem;
+            font-weight: 400;
+            margin: 16px 0 0;
+            text-align: center;
         }
 
         .result-figure img,
@@ -542,6 +585,9 @@
             width: 100%;
             height: auto;
             display: block;
+            border-radius: 14px;
+            border: 1px solid var(--line);
+            background: #0d0f10;
         }
 
         .result-figure iframe {
@@ -549,9 +595,286 @@
             border: 1px solid var(--line);
         }
 
+        .large-scene-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 14px;
+        }
+
+        .large-scene-grid img {
+            width: 100%;
+            display: block;
+        }
+
+        .baseline-compare {
+            display: grid;
+            gap: 10px;
+        }
+
+        .baseline-compare-labels,
+        .baseline-compare-row {
+            display: grid;
+            grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
+            gap: 10px;
+            align-items: center;
+        }
+
+        .baseline-compare-labels span {
+            display: block;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--muted);
+            padding: 4px 6px;
+        }
+
+        .baseline-compare-row img {
+            width: 100%;
+            height: 220px;
+            object-fit: contain;
+            display: block;
+            border-radius: 12px;
+            border: 1px solid var(--line);
+            background: #fff;
+        }
+
+        .interactive-panel {
+            margin-top: 36px;
+            padding: 20px;
+            border: 1px solid var(--line);
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+        }
+
+        .interactive-panel h3 {
+            margin: 0 0 14px;
+            font-size: 1.1rem;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .thumb-row {
+            display: flex;
+            gap: 0;
+            margin-bottom: 18px;
+            overflow-x: auto;
+            overflow-y: visible;
+            scroll-behavior: smooth;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+        }
+
+        .thumb-row::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .thumb-btn {
+            border: 0;
+            background: #fff;
+            padding: 0;
+            cursor: pointer;
+            position: relative;
+            flex: 0 0 150px;
+            z-index: 1;
+            transition: transform 180ms ease, z-index 0ms linear 180ms;
+        }
+
+        .thumb-btn img {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            object-fit: cover;
+            display: block;
+        }
+
+        .thumb-btn:hover {
+            transform: scale(1.08);
+            z-index: 3;
+            transition: transform 160ms ease, z-index 0ms linear 0ms;
+        }
+
+        .thumb-btn.active {
+            box-shadow: inset 0 0 0 2px var(--accent);
+        }
+
+        .interactive-view {
+            display: grid;
+            grid-template-columns: minmax(0, 6fr) minmax(0, 4fr);
+            gap: 16px;
+            align-items: stretch;
+        }
+
+        .interactive-view-single {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .interactive-scene-column {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .interactive-image-box {
+            border: 1px solid var(--line);
+            background: var(--surface-strong);
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+        }
+
+        .interactive-image-box img {
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+            display: block;
+        }
+
+        .interactive-scene-column .interactive-image-box {
+            flex: 1;
+            min-height: 0;
+        }
+
+        .interactive-scene-column .interactive-image-box img {
+            height: 100%;
+            width: 100%;
+        }
+
+        .interactive-cond-column {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .interactive-cond-column .interactive-image-box {
+            flex: 1;
+            min-height: 0;
+        }
+
+        .interactive-cond-column .interactive-image-box img {
+            height: 100%;
+            width: 100%;
+            object-fit: contain;
+        }
+
+        .interactive-cond-column .scene-index-label {
+            height: 44px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .interactive-controls {
+            height: 44px;
+            flex-shrink: 0;
+        }
+
+        #selected-scene-image {
+            transform: rotate(-90deg);
+            transform-origin: center center;
+        }
+
+        .interactive-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* height already set above; keep overrides here for media queries */
+
+        .interactive-controls button {
+            border: 1px solid var(--accent);
+            background: var(--accent);
+            color: #fff;
+            padding: 7px 14px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 999px;
+            transition: transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
+        }
+
+        .interactive-controls button:hover {
+            opacity: 0.96;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 14px rgba(32, 78, 90, 0.22);
+        }
+
+        .scene-index-label {
+            font-size: 0.9rem;
+            color: var(--muted);
+            min-width: 90px;
+            text-align: center;
+        }
+
+        .text-cond-display {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .text-cond-selector-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .text-cond-selector-row label {
+            font-size: 0.9rem;
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        .text-cond-select {
+            border: 1px solid var(--line);
+            background: var(--surface-strong);
+            color: var(--text);
+            min-width: min(540px, 100%);
+            padding: 8px 10px;
+            font-size: 0.9rem;
+            outline: none;
+            border-radius: 10px;
+        }
+
+        .text-cond-select:focus {
+            border-color: #1f1f1f;
+            box-shadow: inset 0 0 0 1px #1f1f1f;
+        }
+
+        .text-cond-dialog {
+            border: 1px solid var(--line);
+            background: var(--surface-strong);
+            padding: 10px 14px;
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.45;
+            border-radius: 12px;
+        }
+
+        .text-cond-prompt {
+            margin: 0;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+
         @media (max-width: 980px) {
             .hero {
                 padding: 60px 0 40px;
+            }
+
+            .section-panel {
+                padding: 22px;
             }
 
             .hero-grid,
@@ -570,6 +893,15 @@
             .page-shell {
                 width: min(100vw - 40px, 1000px);
             }
+
+            .thumb-row {
+                overflow-x: auto;
+            }
+
+            .thumb-btn {
+                flex-basis: 128px;
+            }
+
         }
 
         @media (max-width: 720px) {
@@ -611,6 +943,10 @@
                 font-size: 1.8rem;
             }
 
+            .section-panel {
+                padding: 18px;
+            }
+
             .mini-grid {
                 grid-template-columns: 1fr;
                 gap: 16px;
@@ -632,6 +968,36 @@
                 gap: 40px;
                 margin-top: 40px;
             }
+
+            .interactive-view {
+                grid-template-columns: 1fr;
+            }
+
+            .interactive-image-box {
+                min-height: 200px;
+            }
+
+            .thumb-row {
+                overflow-x: auto;
+            }
+
+            .thumb-btn {
+                flex-basis: 108px;
+            }
+
+            .large-scene-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .baseline-compare-labels,
+            .baseline-compare-row {
+                gap: 8px;
+            }
+
+            .baseline-compare-row img {
+                height: 170px;
+            }
+
         }
     </style>
 </head>
@@ -721,7 +1087,7 @@
                 The model operates in a vectorized latent space that jointly represents road layout and actor dynamics.
             </p>
             <p style="margin-top: 16px;">
-                We model scenes as variable-length vector tokens and condition generation with text, image, and depth signals.
+                We model scenes as variable-length vector tokens and condition generation with prompt, image, and depth signals.
                 A gated cross-global control mechanism combines dense cross-attention with a compact global-context route,
                 enabling controllable edits while preserving topology, geometric consistency, and long-range rollout coherence.
             </p>
@@ -754,29 +1120,85 @@
                 <h2>Results</h2>
             </div>
             <p style="margin-bottom: 30px;">
-                We visualize initial scenes generated via ScenarioControl under both image and text conditioning, alongside
+                We visualize initial scenes generated via ScenarioControl under both image and prompt conditioning, alongside
                 video rendering of the resulting driving rollouts. Across conditions, the method produces diverse and
                 realistic 3D scenarios with consistent road geometry, plausible agent behavior, and coherent ego-view
                 observations. 
             </p>
  
-
+<!-- 
             <div class="result-figure">
                 <h3>Image-Conditioned Scene Generation</h3>
                 <img src="media/img2scenario_v4.png" alt="Image-conditioned scene generation results">
+            </div> -->
+
+            <div class="interactive-panel" id="img-cond-interactive">
+                <h3>Image-Conditioned Scene Generation</h3>
+                <div class="thumb-row" id="img-cond-thumbs"></div>
+
+                <div class="interactive-view">
+                    <div class="interactive-cond-column">
+                        <div class="interactive-image-box">
+                            <img id="selected-cond-image" src="media/img_cond/img_cond_1.jpg" alt="Selected conditioning image">
+                        </div>
+                        <span class="scene-index-label">Conditioning Image</span>
+                    </div>
+
+                    <div class="interactive-scene-column">
+                        <div class="interactive-image-box">
+                            <img id="selected-scene-image" src="media/img_cond/scene_img_cond_1_1.png" alt="Selected generated scene">
+                        </div>
+
+                        <div class="interactive-controls">
+                            <button type="button" id="scene-prev">Previous</button>
+                            <span class="scene-index-label" id="scene-index-label">Scene 1 / 4</span>
+                            <button type="button" id="scene-next">Next</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="interactive-panel" id="img-cond-proj-interactive">
+                <h3>Additional Image-Conditioned Generation Results</h3>
+                <div class="thumb-row" id="img-cond-proj-thumbs"></div>
+
+                <div class="interactive-view interactive-view-single">
+                    <div class="interactive-scene-column">
+                        <div class="interactive-image-box">
+                            <img id="selected-proj-result-image" src="media/img_cond_proj/img_cond_proj_1_orig_matched.png" alt="Selected matched projection result">
+                        </div>
+
+                        <div class="interactive-controls">
+                            <button type="button" id="proj-generate">Generate</button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="result-figure">
-                <!-- <h3>Image-Conditioned Video</h3> -->
+                
                 <video autoplay loop playsinline muted preload="metadata">
                     <source src="media/image-conditioned.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
+                <div class="video-caption">
+                    <span>Image-Conditioned Scenario Generation and Video Rollout.</span>
+                </div>
             </div>
 
-            <div class="result-figure">
-                <h3>Text-Conditioned Scene Generation</h3>
-                <img src="media/text_scenario_v2.6.png" alt="Text-conditioned scene generation results">
+            <div class="interactive-panel" id="text-cond-interactive">
+                <h3>Prompt-Conditioned Scene Generation</h3>
+                <div class="text-cond-selector-row">
+                    <label for="text-cond-select">Choose Prompt</label>
+                    <select id="text-cond-select" class="text-cond-select" aria-label="Choose text prompt"></select>
+                </div>
+
+                <div class="text-cond-display">
+                    <div class="text-cond-dialog" id="selected-text-cond-prompt"></div>
+                    <div class="interactive-image-box">
+                        <img id="selected-text-cond-image" src="media/text_cond/text_cond_1.png" alt="Selected text-conditioned generation result">
+                    </div>
+                </div>
             </div>
             
             <div class="result-figure">
@@ -785,15 +1207,49 @@
                     <source src="media/text-conditioned.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
+                <div class="video-caption">
+                    <span>Prompt-Conditioned Scenario and Video Generation.</span>
+                </div>
+            </div>
+
+            <div class="result-figure">
+                <h3>Large Scene Generation</h3>
+                <div class="large-scene-grid">
+                    <img src="media/large_scene/large_scene_1.png" alt="Large scene generation sample 1">
+                    <img src="media/large_scene/large_scene_2.png" alt="Large scene generation sample 2">
+                    <img src="media/large_scene/large_scene_3.png" alt="Large scene generation sample 3">
+                    <img src="media/large_scene/large_scene_4.png" alt="Large scene generation sample 4">
+                </div>
             </div>
             
 
             <div class="result-figure">
-                <h3>Firstframe-Conditioned Video</h3>
+                <h3>Additional Generated Driving Scenarios</h3>
                 <video autoplay loop playsinline muted preload="metadata">
                     <source src="media/firstframe-conditioned.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
+            </div>
+
+            <div class="result-figure">
+                <h3>Comparison to Baselines</h3>
+                <div class="baseline-compare">
+                    <div class="baseline-compare-labels">
+                        <span>Conditioning Image</span>
+                        <span>Concatenation</span>
+                        <span>Our Method</span>
+                    </div>
+                    <div class="baseline-compare-row">
+                        <img src="media/viz_baselines/gt_1.png" alt="Conditioning image sample 1">
+                        <img src="media/viz_baselines/concat_1.png" alt="Concatenation baseline sample 1">
+                        <img src="media/viz_baselines/ours_1.png" alt="Our method sample 1">
+                    </div>
+                    <div class="baseline-compare-row">
+                        <img src="media/viz_baselines/gt_2.png" alt="Conditioning image sample 2">
+                        <img src="media/viz_baselines/concat_2.png" alt="Concatenation baseline sample 2">
+                        <img src="media/viz_baselines/ours_2.png" alt="Our method sample 2">
+                    </div>
+                </div>
             </div>
 
 
@@ -823,5 +1279,254 @@
         publication actions, wide media presentation, and glass-panel content sections.
     </p>
 </div>
+<script>
+    (function () {
+        var conditionImages = [
+            "img_cond_1.jpg",
+            "img_cond_2.png",
+            "img_cond_3.png",
+            "img_cond_4.png",
+            "img_cond_5.png",
+            "img_cond_6.png",
+            "img_cond_7.png",
+            "img_cond_8.png"
+        ];
+
+        var sceneCountPerCondition = 4;
+        var selectedCondition = 1;
+        var selectedScene = 1;
+
+        var thumbsContainer = document.getElementById("img-cond-thumbs");
+        var condImageEl = document.getElementById("selected-cond-image");
+        var sceneImageEl = document.getElementById("selected-scene-image");
+        var sceneIndexLabel = document.getElementById("scene-index-label");
+        var prevBtn = document.getElementById("scene-prev");
+        var nextBtn = document.getElementById("scene-next");
+
+        var projConditionIndices = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14];
+        var selectedProjCondition = 1;
+        var projShowingGenerated = false;
+
+        var projThumbsContainer = document.getElementById("img-cond-proj-thumbs");
+        var projResultImageEl = document.getElementById("selected-proj-result-image");
+        var projGenerateBtn = document.getElementById("proj-generate");
+
+        var textConditionItems = [
+            {
+                file: "text_cond_1.png",
+                shortLabel: "1. Four-way intersection, multi-lane, multiple vehicles",
+                prompt: "The scene is a four-way intersection featuring multiple lanes in each direction. Multiple vehicles exist."
+            },
+            {
+                file: "text_cond_2.png",
+                shortLabel: "2. T-intersection with multiple vehicles",
+                prompt: "The scene is a T-intersection. Multiple vehicles exist."
+            },
+            {
+                file: "text_cond_3.png",
+                shortLabel: "3. Curved multi-lane road with pedestrians",
+                prompt: "The scene depicts a multi-lane road with a curved layout. There are also pedestrians near the road."
+            },
+            {
+                file: "text_cond_4.png",
+                shortLabel: "4. Multi-lane road with left-turn ahead",
+                prompt: "The scene depicts a multi-lane road with a left-turning ahead."
+            },
+            {
+                file: "text_cond_5.png",
+                shortLabel: "5. Narrow vertical road",
+                prompt: "The scene depicts a narrow, vertically oriented road."
+            },
+            {
+                file: "text_cond_6.png",
+                shortLabel: "6. Complex multi-lane intersection",
+                prompt: "The scene depicts a multi-lane intersection with a complex road topology."
+            },
+            {
+                file: "text_cond_7.png",
+                shortLabel: "7. Four-way intersection variant",
+                prompt: "The scene is a four-way intersection featuring multiple lanes in each direction. Multiple vehicles exists."
+            },
+            {
+                file: "text_cond_8.png",
+                shortLabel: "8. T-intersection variant",
+                prompt: "The scene is a T-intersection. Multiple vehicles exists."
+            },
+            {
+                file: "text_cond_9.png",
+                shortLabel: "9. Curved road with pedestrians variant",
+                prompt: "The scene depicts a multi-lane road with a curved layout. There are also pedestrians near the road."
+            }
+        ];
+
+        var selectedTextCondition = 1;
+        var textCondSelect = document.getElementById("text-cond-select");
+        var selectedTextCondImage = document.getElementById("selected-text-cond-image");
+        var selectedTextCondPrompt = document.getElementById("selected-text-cond-prompt");
+
+        function getSceneImagePath(condIndex, sceneIndex) {
+            return "media/img_cond/scene_img_cond_" + condIndex + "_" + sceneIndex + ".png";
+        }
+
+        function getProjOrigPath(condIndex) {
+            return "media/img_cond_proj/img_cond_proj_" + condIndex + "_orig.png";
+        }
+
+        function getProjMatchedPath(condIndex) {
+            return "media/img_cond_proj/img_cond_proj_" + condIndex + "_orig_matched.png";
+        }
+
+        function getProjGeneratedPath(condIndex) {
+            return "media/img_cond_proj/img_cond_proj_" + condIndex + ".png";
+        }
+
+        function renderThumbs() {
+            thumbsContainer.innerHTML = "";
+            conditionImages.forEach(function (filename, idx) {
+                var condIndex = idx + 1;
+                var btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "thumb-btn" + (condIndex === selectedCondition ? " active" : "");
+                btn.setAttribute("aria-label", "Select conditioning image " + condIndex);
+
+                var img = document.createElement("img");
+                img.src = "media/img_cond/" + filename;
+                img.alt = "Conditioning preview " + condIndex;
+
+                btn.appendChild(img);
+                btn.addEventListener("click", function () {
+                    selectedCondition = condIndex;
+                    selectedScene = 1;
+                    updateView();
+                });
+
+                btn.addEventListener("mouseenter", function () {
+                    btn.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+                });
+
+                btn.addEventListener("focus", function () {
+                    btn.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+                });
+
+                thumbsContainer.appendChild(btn);
+            });
+        }
+
+        function renderProjThumbs() {
+            if (!projThumbsContainer) {
+                return;
+            }
+
+            projThumbsContainer.innerHTML = "";
+            projConditionIndices.forEach(function (condIndex) {
+                var btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "thumb-btn" + (condIndex === selectedProjCondition ? " active" : "");
+                btn.setAttribute("aria-label", "Select projection conditioning image " + condIndex);
+
+                var img = document.createElement("img");
+                img.src = getProjOrigPath(condIndex);
+                img.alt = "Projection conditioning preview " + condIndex;
+
+                btn.appendChild(img);
+                btn.addEventListener("click", function () {
+                    selectedProjCondition = condIndex;
+                    projShowingGenerated = false;
+                    updateProjView();
+                });
+
+                btn.addEventListener("mouseenter", function () {
+                    btn.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+                });
+
+                btn.addEventListener("focus", function () {
+                    btn.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+                });
+
+                projThumbsContainer.appendChild(btn);
+            });
+        }
+
+        function updateView() {
+            condImageEl.src = "media/img_cond/" + conditionImages[selectedCondition - 1];
+            sceneImageEl.src = getSceneImagePath(selectedCondition, selectedScene);
+            sceneIndexLabel.textContent = "Sample " + selectedScene + " / " + sceneCountPerCondition;
+            renderThumbs();
+        }
+
+        function updateProjView() {
+            if (!projResultImageEl) {
+                return;
+            }
+
+            projResultImageEl.src = projShowingGenerated
+                ? getProjGeneratedPath(selectedProjCondition)
+                : getProjMatchedPath(selectedProjCondition);
+
+            if (projGenerateBtn) {
+                projGenerateBtn.textContent = projShowingGenerated ? "Generated" : "Generate";
+            }
+
+            renderProjThumbs();
+        }
+
+        function populateTextConditionSelect() {
+            if (!textCondSelect) {
+                return;
+            }
+
+            textCondSelect.innerHTML = "";
+            textConditionItems.forEach(function (item, idx) {
+                var condIndex = idx + 1;
+                var option = document.createElement("option");
+                option.value = String(condIndex);
+                option.textContent = item.shortLabel;
+                textCondSelect.appendChild(option);
+            });
+        }
+
+        function updateTextConditionView() {
+            if (!selectedTextCondImage || !selectedTextCondPrompt) {
+                return;
+            }
+
+            var selectedItem = textConditionItems[selectedTextCondition - 1];
+            selectedTextCondImage.src = "media/text_cond/" + selectedItem.file;
+            selectedTextCondPrompt.textContent = selectedItem.prompt;
+            if (textCondSelect) {
+                textCondSelect.value = String(selectedTextCondition);
+            }
+        }
+
+        if (textCondSelect) {
+            textCondSelect.addEventListener("change", function () {
+                selectedTextCondition = Number(textCondSelect.value);
+                updateTextConditionView();
+            });
+        }
+
+        if (projGenerateBtn) {
+            projGenerateBtn.addEventListener("click", function () {
+                projShowingGenerated = true;
+                updateProjView();
+            });
+        }
+
+        prevBtn.addEventListener("click", function () {
+            selectedScene = selectedScene === 1 ? sceneCountPerCondition : selectedScene - 1;
+            updateView();
+        });
+
+        nextBtn.addEventListener("click", function () {
+            selectedScene = selectedScene === sceneCountPerCondition ? 1 : selectedScene + 1;
+            updateView();
+        });
+
+        updateView();
+        updateProjView();
+        populateTextConditionSelect();
+        updateTextConditionView();
+    })();
+</script>
 </body>
 </html>

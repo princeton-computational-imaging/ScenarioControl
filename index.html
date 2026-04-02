@@ -101,18 +101,18 @@
 
         .hero {
             position: relative;
-            overflow: hidden;
+            overflow: visible;
             padding: 80px 0 60px;
-            border: 1px solid var(--line);
-            border-radius: var(--radius-xl);
-            background: linear-gradient(135deg, #fffdf8 0%, #f1f4ee 46%, #edf4f6 100%);
-            box-shadow: var(--shadow);
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+            box-shadow: none;
             text-align: center;
         }
 
         .hero::before,
         .hero::after {
-            content: "";
+            content: none;
             position: absolute;
             width: 360px;
             height: 360px;
@@ -374,11 +374,11 @@
         }
 
         .section-panel {
-            padding: 28px;
-            border-radius: var(--radius-lg);
-            border: 1px solid var(--line);
-            background: var(--surface);
-            box-shadow: var(--shadow);
+            padding: 0;
+            border-radius: 0;
+            border: none;
+            background: transparent;
+            box-shadow: none;
             max-width: var(--content-width);
             margin: 0 auto;
         }
@@ -587,7 +587,7 @@
             display: block;
             border-radius: 14px;
             border: 1px solid var(--line);
-            background: #0d0f10;
+            background: var(--bg);
         }
 
         .result-figure iframe {
@@ -595,15 +595,88 @@
             border: 1px solid var(--line);
         }
 
-        .large-scene-grid {
+        .large-scene-compare {
             display: grid;
-            grid-template-columns: 1fr;
-            gap: 14px;
+            gap: 12px;
         }
 
-        .large-scene-grid img {
-            width: 100%;
+        .large-scene-headings,
+        .large-scene-row {
+            display: grid;
+            grid-template-columns: minmax(0, 4fr) minmax(0, 6fr);
+            gap: 12px;
+            align-items: stretch;
+        }
+
+        .large-scene-headings span {
             display: block;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--muted);
+            padding: 4px 6px;
+        }
+
+        .large-scene-cell {
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: var(--bg);
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 190px;
+        }
+
+        .large-scene-cell img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+            border-radius: 8px;
+        }
+
+        .large-scene-cond-dialog {
+            position: relative;
+            border: 1px solid #c6d4eb;
+            border-radius: 16px;
+            background: linear-gradient(140deg, #ffffff 0%, #eef4ff 100%);
+            padding: 12px 14px;
+            box-shadow: 0 6px 14px rgba(34, 54, 102, 0.08);
+            color: #31435d;
+            line-height: 1.45;
+            font-size: 0.84rem;
+            width: 100%;
+        }
+
+        .large-scene-cond-dialog::after {
+            content: "";
+            position: absolute;
+            top: 18px;
+            right: -7px;
+            width: 12px;
+            height: 12px;
+            background: #f4f8ff;
+            border-right: 1px solid #c6d4eb;
+            border-top: 1px solid #c6d4eb;
+            transform: rotate(45deg);
+        }
+
+        .large-scene-cond-title {
+            display: inline-block;
+            margin: 0 0 8px;
+            padding: 2px 9px;
+            border-radius: 999px;
+            background: #e0eaff;
+            color: #36507a;
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+            text-transform: uppercase;
+        }
+
+        .large-scene-cond-dialog p {
+            margin: 0;
         }
 
         .baseline-compare {
@@ -706,6 +779,12 @@
 
         .interactive-view-single {
             grid-template-columns: minmax(0, 1fr);
+        }
+
+        .interactive-subsection {
+            margin-top: 18px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
         }
 
         .interactive-scene-column {
@@ -874,7 +953,7 @@
             }
 
             .section-panel {
-                padding: 22px;
+                padding: 0;
             }
 
             .hero-grid,
@@ -944,7 +1023,7 @@
             }
 
             .section-panel {
-                padding: 18px;
+                padding: 0;
             }
 
             .mini-grid {
@@ -985,8 +1064,13 @@
                 flex-basis: 108px;
             }
 
-            .large-scene-grid {
+            .large-scene-headings,
+            .large-scene-row {
                 grid-template-columns: 1fr;
+            }
+
+            .large-scene-cond-dialog::after {
+                display: none;
             }
 
             .baseline-compare-labels,
@@ -1156,33 +1240,33 @@
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="interactive-panel" id="img-cond-proj-interactive">
-                <h3>Additional Image-Conditioned Generation Results</h3>
-                <div class="thumb-row" id="img-cond-proj-thumbs"></div>
+                <div class="interactive-subsection" id="img-cond-proj-interactive">
+                    <div class="thumb-row" id="img-cond-proj-thumbs"></div>
 
-                <div class="interactive-view interactive-view-single">
-                    <div class="interactive-scene-column">
-                        <div class="interactive-image-box">
-                            <img id="selected-proj-result-image" src="media/img_cond_proj/img_cond_proj_1_orig_matched.png" alt="Selected matched projection result">
-                        </div>
+                    <div class="interactive-view interactive-view-single">
+                        <div class="interactive-scene-column">
+                            <div class="interactive-image-box">
+                                <img id="selected-proj-result-image" src="media/img_cond_proj/img_cond_proj_1_orig_matched.png" alt="Selected matched projection result">
+                            </div>
 
-                        <div class="interactive-controls">
-                            <button type="button" id="proj-generate">Generate</button>
+                            <div class="interactive-controls">
+                                <button type="button" id="proj-generate">Generate</button>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="result-figure">
-                
-                <video autoplay loop playsinline muted preload="metadata">
-                    <source src="media/image-conditioned.mp4" type="video/mp4">
-                    Your browser does not support the video tag.
-                </video>
-                <div class="video-caption">
-                    <span>Image-Conditioned Scenario Generation and Video Rollout.</span>
+                <div class="interactive-subsection">
+                    <div class="result-figure">
+                        <video autoplay loop playsinline muted preload="metadata">
+                            <source src="media/image-conditioned.mp4" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                        <div class="video-caption">
+                            <span>Image-Conditioned Scenario Generation and Video Rollout.</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -1214,11 +1298,47 @@
 
             <div class="result-figure">
                 <h3>Large Scene Generation</h3>
-                <div class="large-scene-grid">
-                    <img src="media/large_scene/large_scene_1.png" alt="Large scene generation sample 1">
-                    <img src="media/large_scene/large_scene_2.png" alt="Large scene generation sample 2">
-                    <img src="media/large_scene/large_scene_3.png" alt="Large scene generation sample 3">
-                    <img src="media/large_scene/large_scene_4.png" alt="Large scene generation sample 4">
+                <div class="large-scene-compare">
+                    <div class="large-scene-headings">
+                        <span>Conditioning</span>
+                        <span>Generated Scene</span>
+                    </div>
+
+                    <div class="large-scene-row">
+                        <div class="large-scene-cell">
+                            <img src="media/large_scene/large_scene_1_cond.png" alt="Conditioning image for large scene 1">
+                        </div>
+                        <div class="large-scene-cell">
+                            <img src="media/large_scene/large_scene_1_scene.png" alt="Large scene generation sample 1">
+                        </div>
+                    </div>
+
+                    <div class="large-scene-row">
+                        <div class="large-scene-cell">
+                            <img src="media/large_scene/large_scene_2_cond.png" alt="Conditioning image for large scene 2">
+                        </div>
+                        <div class="large-scene-cell">
+                            <img src="media/large_scene/large_scene_2_scene.png" alt="Large scene generation sample 2">
+                        </div>
+                    </div>
+
+                    <div class="large-scene-row">
+                        <div class="large-scene-cond-dialog" aria-label="Conditioning prompt for large scene 3">
+                            <p>The scene depicts a multi-lane road intersection with a dedicated right-turn lane. The ego vehicle is positioned in the center, moving upward along a lane that merges into the right-turn path. To the left of the ego vehicle, there is a lane with multiple vehicles traveling in the same direction. To the right, there is a lane with multiple vehicles also traveling in the same direction, adjacent to the dedicated right-turn lane. There are pedestrians on the sidewalks and static objects such as road signs and barriers present.</p>
+                        </div>
+                        <div class="large-scene-cell">
+                            <img src="media/large_scene/large_scene_3_scene.png" alt="Large scene generation sample 3">
+                        </div>
+                    </div>
+
+                    <div class="large-scene-row">
+                        <div class="large-scene-cond-dialog" aria-label="Conditioning prompt for large scene 4">
+                            <p>The scene depicts a multi-lane intersection with a central roadway intersecting a perpendicular road from the left. The main road has two lanes in each direction. The perpendicular road has two lanes, one for each direction of travel. A traffic light at the intersection shows a green path allowing straight-through movement for the ego vehicle. Agents in the scene include multiple vehicles traveling in the same direction as the ego vehicle, others in the opposite direction or turning into the intersection, one pedestrian near the right-side crossing area, and one gray static object on the left side of the intersection.</p>
+                        </div>
+                        <div class="large-scene-cell">
+                            <img src="media/large_scene/large_scene_4_scene.png" alt="Large scene generation sample 4">
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -1273,11 +1393,6 @@
 }</pre>
         </section>
     </main>
-
-    <p class="footer-note">
-        This static page was restyled to match the reference site's academic project-page structure, with a strong title block,
-        publication actions, wide media presentation, and glass-panel content sections.
-    </p>
 </div>
 <script>
     (function () {

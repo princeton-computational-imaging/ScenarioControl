@@ -1065,8 +1065,8 @@
 
         <div class="hero-grid">
             <div class="video-card" id="teaser">
-                <video autoplay loop playsinline muted>
-                    <source src="media/video_teaser_eccv.mp4" type="video/mp4">
+                <video class="managed-video" autoplay loop playsinline muted preload="none" webkit-playsinline>
+                    <source data-src="media/video_teaser_eccv.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
                 <div class="video-caption">
@@ -1177,8 +1177,8 @@
 
             <div class="result-figure">
                 
-                <video autoplay loop playsinline muted preload="metadata">
-                    <source src="media/image-conditioned.mp4" type="video/mp4">
+                <video class="managed-video" autoplay loop playsinline muted preload="none" webkit-playsinline>
+                    <source data-src="media/image-conditioned.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
                 <div class="video-caption">
@@ -1203,8 +1203,8 @@
             
             <div class="result-figure">
                 <!-- <h3>Text-Conditioned Video</h3> -->
-                <video autoplay loop playsinline muted preload="metadata">
-                    <source src="media/text-conditioned.mp4" type="video/mp4">
+                <video class="managed-video" autoplay loop playsinline muted preload="none" webkit-playsinline>
+                    <source data-src="media/text-conditioned.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
                 <div class="video-caption">
@@ -1225,8 +1225,8 @@
 
             <div class="result-figure">
                 <h3>Additional Generated Driving Scenarios</h3>
-                <video autoplay loop playsinline muted preload="metadata">
-                    <source src="media/firstframe-conditioned.mp4" type="video/mp4">
+                <video class="managed-video" autoplay loop playsinline muted preload="none" webkit-playsinline>
+                    <source data-src="media/firstframe-conditioned.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
             </div>
@@ -1498,6 +1498,62 @@
             }
         }
 
+        function initManagedVideos() {
+            var managedVideos = Array.prototype.slice.call(document.querySelectorAll("video.managed-video"));
+            if (!managedVideos.length) {
+                return;
+            }
+
+            function ensureVideoLoaded(video) {
+                var source = video.querySelector("source[data-src]");
+                if (!source) {
+                    return;
+                }
+
+                if (!source.getAttribute("src")) {
+                    source.setAttribute("src", source.getAttribute("data-src"));
+                    video.load();
+                }
+            }
+
+            function tryPlay(video) {
+                video.muted = true;
+                var playPromise = video.play();
+                if (playPromise && typeof playPromise.catch === "function") {
+                    playPromise.catch(function () {
+                        video.setAttribute("controls", "controls");
+                    });
+                }
+            }
+
+            if (!("IntersectionObserver" in window)) {
+                managedVideos.forEach(function (video) {
+                    ensureVideoLoaded(video);
+                    tryPlay(video);
+                });
+                return;
+            }
+
+            var observer = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    var video = entry.target;
+                    if (entry.isIntersecting) {
+                        ensureVideoLoaded(video);
+                        tryPlay(video);
+                    } else {
+                        video.pause();
+                    }
+                });
+            }, {
+                root: null,
+                threshold: 0.25
+            });
+
+            managedVideos.forEach(function (video) {
+                observer.observe(video);
+            });
+        }
+
         if (textCondSelect) {
             textCondSelect.addEventListener("change", function () {
                 selectedTextCondition = Number(textCondSelect.value);
@@ -1526,6 +1582,7 @@
         updateProjView();
         populateTextConditionSelect();
         updateTextConditionView();
+        initManagedVideos();
     })();
 </script>
 </body>

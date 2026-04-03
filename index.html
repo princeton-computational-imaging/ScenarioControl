@@ -37,6 +37,7 @@
             color: var(--text);
             background: var(--bg);
             line-height: 1.7;
+            overflow-x: hidden;
         }
 
         a {
@@ -499,7 +500,9 @@
             border: 1px solid var(--line);
             font-family: 'Monaco', 'Menlo', monospace;
             text-align: left;
-            max-width: var(--content-width);
+            max-width: 100%;
+            word-wrap: break-word;
+            white-space: pre-wrap;
         }
 
         .footer-note {
@@ -758,28 +761,21 @@
 
         .thumb-row {
             display: flex;
-            gap: 0;
+            gap: 6px;
             margin-bottom: 18px;
-            overflow-x: auto;
-            overflow-y: visible;
-            scroll-behavior: smooth;
-            border: 1px solid var(--line);
-            border-radius: 12px;
-        }
-
-        .thumb-row::-webkit-scrollbar {
-            height: 6px;
         }
 
         .thumb-btn {
-            border: 0;
+            border: 2px solid transparent;
             background: #fff;
             padding: 0;
             cursor: pointer;
-            position: relative;
-            flex: 0 0 150px;
-            z-index: 1;
-            transition: transform 180ms ease, z-index 0ms linear 180ms;
+            flex: 1 1 0;
+            min-width: 0;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: border-color 160ms ease, opacity 160ms ease;
+            opacity: 0.7;
         }
 
         .thumb-btn img {
@@ -790,13 +786,12 @@
         }
 
         .thumb-btn:hover {
-            transform: scale(1.08);
-            z-index: 3;
-            transition: transform 160ms ease, z-index 0ms linear 0ms;
+            opacity: 1;
         }
 
         .thumb-btn.active {
-            box-shadow: inset 0 0 0 2px var(--accent);
+            border-color: var(--accent);
+            opacity: 1;
         }
 
         .interactive-view {
@@ -943,7 +938,8 @@
             border: 1px solid var(--line);
             background: var(--surface-strong);
             color: var(--text);
-            min-width: min(540px, 100%);
+            width: 100%;
+            max-width: 540px;
             padding: 8px 10px;
             font-size: 0.9rem;
             outline: none;
@@ -1004,14 +1000,6 @@
 
             .page-shell {
                 width: min(100vw - 40px, 1000px);
-            }
-
-            .thumb-row {
-                overflow-x: auto;
-            }
-
-            .thumb-btn {
-                flex-basis: 128px;
             }
 
         }
@@ -1099,14 +1087,6 @@
                 min-height: 200px;
             }
 
-            .thumb-row {
-                overflow-x: auto;
-            }
-
-            .thumb-btn {
-                flex-basis: 108px;
-            }
-
             .large-scene-headings,
             .large-scene-row {
                 grid-template-columns: 1fr;
@@ -1122,9 +1102,17 @@
             }
 
             .baseline-compare-row img {
-                height: 170px;
+                height: auto;
             }
 
+            .interactive-panel {
+                padding: 12px;
+            }
+
+            .thumb-btn {
+                flex: 1 1 0;
+                min-width: 0;
+            }
         }
     </style>
 </head>
@@ -1466,7 +1454,7 @@
         var prevBtn = document.getElementById("scene-prev");
         var nextBtn = document.getElementById("scene-next");
 
-        var projConditionIndices = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14];
+        var projConditionIndices = [1, 2, 3, 4, 5, 6, 7, 9, 10, 12, 13, 14];
         var selectedProjCondition = 1;
         var projShowingGenerated = false;
 

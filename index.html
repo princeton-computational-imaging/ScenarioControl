@@ -1289,10 +1289,7 @@
                             <div class="interactive-image-box">
                                 <img id="selected-proj-result-image" src="media/img_cond_proj/img_cond_proj_1_orig_matched.jpg" alt="Selected matched projection result">
                             </div>
-
-                            <div class="interactive-controls">
-                                <button type="button" id="proj-generate">Generate</button>
-                            </div>
+                            <span class="scene-index-label" id="proj-phase-label">Input → Projection</span>
                         </div>
                     </div>
                 </div>
@@ -1468,7 +1465,8 @@
 
         var projThumbsContainer = document.getElementById("img-cond-proj-thumbs");
         var projResultImageEl = document.getElementById("selected-proj-result-image");
-        var projGenerateBtn = document.getElementById("proj-generate");
+        var projPhaseLabel = document.getElementById("proj-phase-label");
+        var projAutoplayTimer = null;
 
         var textConditionItems = [
             {
@@ -1592,6 +1590,7 @@
                     selectedProjCondition = condIndex;
                     projShowingGenerated = false;
                     updateProjView();
+                    startProjAutoplay();
                 });
 
                 btn.addEventListener("mouseenter", function () {
@@ -1622,8 +1621,8 @@
                 ? getProjGeneratedPath(selectedProjCondition)
                 : getProjMatchedPath(selectedProjCondition);
 
-            if (projGenerateBtn) {
-                projGenerateBtn.textContent = projShowingGenerated ? "Generated" : "Generate";
+            if (projPhaseLabel) {
+                projPhaseLabel.textContent = projShowingGenerated ? "Generated Scenario" : "Input → Projection";
             }
 
             renderProjThumbs();
@@ -1664,12 +1663,27 @@
             });
         }
 
-        if (projGenerateBtn) {
-            projGenerateBtn.addEventListener("click", function () {
-                projShowingGenerated = true;
-                updateProjView();
-            });
+        function startProjAutoplay() {
+            stopProjAutoplay();
+            function tick() {
+                var delay = projShowingGenerated ? 1000 : 500;
+                projAutoplayTimer = setTimeout(function () {
+                    projShowingGenerated = !projShowingGenerated;
+                    updateProjView();
+                    tick();
+                }, delay);
+            }
+            tick();
         }
+
+        function stopProjAutoplay() {
+            if (projAutoplayTimer) {
+                clearTimeout(projAutoplayTimer);
+                projAutoplayTimer = null;
+            }
+        }
+
+        startProjAutoplay();
 
         prevBtn.addEventListener("click", function () {
             selectedScene = selectedScene === 1 ? sceneCountPerCondition : selectedScene - 1;

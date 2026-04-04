@@ -244,7 +244,7 @@ $(document).ready(function() {
                 textCondCategories.forEach(function (cat) {
                     if (cat !== targetCat && best[cat] !== selection[cat]) otherChanges++;
                 });
-                availability[targetCat][val] = otherChanges < 2;
+                availability[targetCat][val] = otherChanges === 0;
                 seen[val] = true;
             });
         });

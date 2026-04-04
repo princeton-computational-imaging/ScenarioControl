@@ -344,16 +344,29 @@ body {
     padding: 4px 6px;
 }
 
-.proj-hover-hint {
-    font-size: 0.78rem;
-    color: var(--muted);
-    text-align: center;
-    opacity: 0.7;
-    font-style: italic;
-}
-
 #proj-image-box {
     cursor: pointer;
+    position: relative;
+}
+
+.proj-hover-hint {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.2);
+    color: #fff;
+    font-size: 0.88rem;
+    font-weight: 500;
+    font-style: italic;
+    letter-spacing: 0.01em;
+    pointer-events: none;
+    transition: opacity 250ms ease;
+}
+
+#proj-image-box:hover .proj-hover-hint {
+    opacity: 0;
 }
 
 /* Text conditioning */
@@ -436,13 +449,13 @@ body {
 }
 
 .config-pill {
-    border: 1px solid var(--line);
-    background: var(--surface-strong);
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    background: rgba(255, 255, 255, 0.45);
     color: var(--text);
     font-size: 0.82rem;
     padding: 5px 14px;
     cursor: pointer;
-    transition: background 160ms ease, color 160ms ease, opacity 160ms ease;
+    transition: background 200ms ease, color 200ms ease, border-color 200ms ease, opacity 200ms ease;
     outline: none;
     white-space: nowrap;
 }
@@ -464,13 +477,14 @@ body {
 }
 
 .config-pill:hover {
-    background: var(--accent-soft);
+    background: rgba(0, 0, 0, 0.06);
+    border-color: rgba(0, 0, 0, 0.25);
 }
 
 .config-pill.active {
-    background: var(--accent);
+    background: rgba(0, 0, 0, 0.75);
     color: #ffffff;
-    border-color: var(--accent);
+    border-color: rgba(0, 0, 0, 0.8);
     z-index: 1;
     position: relative;
 }

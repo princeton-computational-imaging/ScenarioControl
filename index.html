@@ -229,9 +229,8 @@
               <div class="interactive-scene-column">
                 <div class="interactive-image-box" id="proj-image-box">
                   <img id="selected-proj-result-image" src="media/img_cond_proj/img_cond_proj_1_orig_matched.jpg" alt="Selected matched projection result">
+                  <span class="proj-hover-hint" id="proj-hover-hint">Hover to show generated scenario</span>
                 </div>
-                <span class="column-heading" id="proj-phase-label">Input &rarr; Projection</span>
-                <span class="proj-hover-hint" id="proj-hover-hint">hover to show generated scenario</span>
               </div>
             </div>
           </div>
@@ -259,14 +258,14 @@
                 <div class="config-category" data-category="intersection">
                   <span class="config-category-label">Intersection</span>
                   <div class="config-pills">
-                    <button type="button" class="config-pill" data-value="none">None</button>
+                    <button type="button" class="config-pill" data-value="none">N/A</button>
                     <button type="button" class="config-pill" data-value="T">T</button>
                     <button type="button" class="config-pill active" data-value="four-way">Four-way</button>
                     <button type="button" class="config-pill" data-value="complex">Complex</button>
                   </div>
                 </div>
                 <div class="config-category" data-category="curvature">
-                  <span class="config-category-label">Curvature</span>
+                  <span class="config-category-label">Road Shape</span>
                   <div class="config-pills">
                     <button type="button" class="config-pill active" data-value="straight">Straight</button>
                     <button type="button" class="config-pill" data-value="curved">Curved</button>
@@ -275,15 +274,15 @@
                 <div class="config-category" data-category="pedestrians">
                   <span class="config-category-label">Pedestrians</span>
                   <div class="config-pills">
+                    <button type="button" class="config-pill active" data-value="no">N/A</button>
                     <button type="button" class="config-pill" data-value="yes">Yes</button>
-                    <button type="button" class="config-pill active" data-value="no">No</button>
                   </div>
                 </div>
                 <div class="config-category" data-category="lanes">
-                  <span class="config-category-label">Lanes</span>
+                  <span class="config-category-label"># Lanes</span>
                   <div class="config-pills">
+                    <button type="button" class="config-pill" data-value="less">Fewer</button>
                     <button type="button" class="config-pill active" data-value="more">More</button>
-                    <button type="button" class="config-pill" data-value="less">Less</button>
                   </div>
                 </div>
               </div>

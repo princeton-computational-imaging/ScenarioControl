@@ -14,14 +14,6 @@ body {
     margin-bottom: 5px;
 }
 
-.teaser .hero-body {
-  padding: 0;
-}
-
-.teaser video {
-  border: 1px solid var(--line);
-}
-
 .teaser {
   font-family: 'Google Sans', sans-serif;
 }
@@ -783,7 +775,23 @@ body {
     }
 
     .large-scene-map {
-        height: 300px !important;
+        height: auto !important;
+        overflow: visible;
+        cursor: default;
+        touch-action: auto;
+    }
+
+    .large-scene-map img {
+        width: 100%;
+        max-width: 100%;
+        height: auto;
+        transform: none !important;
+    }
+
+    .large-scene-minimap,
+    .large-scene-map-hint,
+    .large-scene-map-warn {
+        display: none !important;
     }
 
     .text-cond-view {

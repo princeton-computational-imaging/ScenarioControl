@@ -15,8 +15,11 @@ body {
 }
 
 .teaser .hero-body {
-  padding-top: 0;
-  padding-bottom: 3rem;
+  padding: 0;
+}
+
+.teaser video {
+  border: 1px solid var(--line);
 }
 
 .teaser {
@@ -108,11 +111,7 @@ body {
 /* Result figure */
 .result-figure {
     width: 100%;
-    margin: 0 0 48px;
-}
-
-.result-figure:last-child {
-    margin-bottom: 0;
+    margin-top: 48px;
 }
 
 .result-figure h3 {
@@ -134,7 +133,6 @@ body {
     background: var(--bg);
 }
 
-.interactive-panel .result-figure video,
 .interactive-panel .result-figure img {
     border: none;
     border-radius: 0;
@@ -155,8 +153,7 @@ body {
 
 /* Interactive panels */
 .interactive-panel {
-    margin-top: 36px;
-    padding: 20px 0;
+    margin-top: 48px;
 }
 
 .interactive-panel h3 {
@@ -807,9 +804,6 @@ body {
         height: auto;
     }
 
-    .interactive-panel {
-        padding: 12px 0;
-    }
 
     .thumb-btn {
         flex: 1 1 0;

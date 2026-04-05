@@ -143,6 +143,21 @@ $(document).ready(function() {
         });
     }
 
+    var interactiveViewEl = document.querySelector("#img-cond-interactive .interactive-view");
+
+    function syncAspectRatios() {
+        if (!interactiveViewEl) return;
+        var condW = condImageEl.naturalWidth;
+        var condH = condImageEl.naturalHeight;
+        var sceneW = sceneImageEl.naturalWidth;
+        var sceneH = sceneImageEl.naturalHeight;
+        if (condW && condH) interactiveViewEl.style.setProperty("--cond-aspect", (condW / condH).toFixed(4));
+        if (sceneW && sceneH) interactiveViewEl.style.setProperty("--scene-aspect", (sceneH / sceneW).toFixed(4));
+    }
+
+    condImageEl.addEventListener("load", syncAspectRatios);
+    sceneImageEl.addEventListener("load", syncAspectRatios);
+
     function updateView() {
         condImageEl.src = "media/img_cond/" + conditionImages[selectedCondition - 1];
         sceneImageEl.src = getSceneImagePath(selectedCondition, selectedScene);
@@ -530,7 +545,12 @@ $(document).ready(function() {
         lsMinimapImg.src = data.scene;
 
         for (var i = 0; i < lsTabBtns.length; i++) {
-            lsTabBtns[i].classList.toggle("active", i === index);
+            var li = lsTabBtns[i].closest("li");
+            if (li) {
+                li.classList.toggle("is-active", i === index);
+            } else {
+                lsTabBtns[i].classList.toggle("active", i === index);
+            }
         }
 
         if (data.type === "image") {

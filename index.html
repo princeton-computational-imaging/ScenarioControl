@@ -315,47 +315,33 @@
         </div>
 
         <!-- Large Scene Generation -->
-        <div class="result-figure">
+        <div class="interactive-panel" id="large-scene-interactive">
           <h3>Large Scene Generation</h3>
-          <div class="large-scene-compare">
-            <div class="large-scene-headings">
+
+          <div class="large-scene-tabs">
+            <div class="config-pills">
+              <button type="button" class="config-pill active" data-ls-tab="0">Image 1</button>
+              <button type="button" class="config-pill" data-ls-tab="1">Image 2</button>
+              <button type="button" class="config-pill" data-ls-tab="2">Prompt 1</button>
+              <button type="button" class="config-pill" data-ls-tab="3">Prompt 2</button>
+            </div>
+          </div>
+
+          <div class="large-scene-viewer">
+            <div class="large-scene-cond" id="ls-cond-column">
               <span class="column-heading">Conditioning</span>
+              <div class="large-scene-cond-image" id="ls-cond-image-box">
+                <img id="ls-cond-img" src="media/large_scene/large_scene_1_cond.jpg" alt="Conditioning image for large scene">
+              </div>
+              <div class="large-scene-cond-dialog" id="ls-cond-text-box" style="display:none;">
+                <p id="ls-cond-text"></p>
+              </div>
+            </div>
+
+            <div class="large-scene-map-col">
               <span class="column-heading">Generated Scene</span>
-            </div>
-
-            <div class="large-scene-row">
-              <div class="large-scene-cell">
-                <img src="media/large_scene/large_scene_1_cond.jpg" alt="Conditioning image for large scene 1" loading="lazy">
-              </div>
-              <div class="large-scene-cell">
-                <img src="media/large_scene/large_scene_1_scene.jpg" alt="Large scene generation sample 1" loading="lazy">
-              </div>
-            </div>
-
-            <div class="large-scene-row">
-              <div class="large-scene-cell">
-                <img src="media/large_scene/large_scene_2_cond.jpg" alt="Conditioning image for large scene 2" loading="lazy">
-              </div>
-              <div class="large-scene-cell">
-                <img src="media/large_scene/large_scene_2_scene.jpg" alt="Large scene generation sample 2" loading="lazy">
-              </div>
-            </div>
-
-            <div class="large-scene-row">
-              <div class="large-scene-cond-dialog" aria-label="Conditioning prompt for large scene 3">
-                <p>The scene depicts a multi-lane road intersection with a dedicated right-turn lane. The ego vehicle is positioned in the center, moving upward along a lane that merges into the right-turn path. To the left of the ego vehicle, there is a lane with multiple vehicles traveling in the same direction. To the right, there is a lane with multiple vehicles also traveling in the same direction, adjacent to the dedicated right-turn lane. There are pedestrians on the sidewalks and static objects such as road signs and barriers present.</p>
-              </div>
-              <div class="large-scene-cell">
-                <img src="media/large_scene/large_scene_3_scene.jpg" alt="Large scene generation sample 3" loading="lazy">
-              </div>
-            </div>
-
-            <div class="large-scene-row">
-              <div class="large-scene-cond-dialog" aria-label="Conditioning prompt for large scene 4">
-                <p>The scene depicts a multi-lane intersection with a central roadway intersecting a perpendicular road from the left. The main road has two lanes in each direction. The perpendicular road has two lanes, one for each direction of travel. A traffic light at the intersection shows a green path allowing straight-through movement for the ego vehicle. Agents in the scene include multiple vehicles traveling in the same direction as the ego vehicle, others in the opposite direction or turning into the intersection, one pedestrian near the right-side crossing area, and one gray static object on the left side of the intersection.</p>
-              </div>
-              <div class="large-scene-cell">
-                <img src="media/large_scene/large_scene_4_scene.jpg" alt="Large scene generation sample 4" loading="lazy">
+              <div class="large-scene-map" id="ls-map-container">
+                <img id="ls-map-img" src="media/large_scene/large_scene_1_scene.jpg" alt="Generated large scene" draggable="false">
               </div>
             </div>
           </div>

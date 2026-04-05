@@ -358,6 +358,322 @@ $(document).ready(function() {
     resolveTextCondConfig();
 })();
 
+// Large Scene interactive map viewer
+(function () {
+    // focus: [x, y] in 0-1 range — point in the image to center on at max zoom
+    var lsData = [
+        { type: "image", cond: "media/large_scene/large_scene_1_cond.jpg", scene: "media/large_scene/large_scene_1_scene.jpg", focus: [0, 0.5] },
+        { type: "image", cond: "media/large_scene/large_scene_2_cond.jpg", scene: "media/large_scene/large_scene_2_scene.jpg", focus: [0, 0.5] },
+        { type: "text",  cond: "The scene depicts a multi-lane road intersection with a dedicated right-turn lane. The ego vehicle is positioned in the center, moving upward along a lane that merges into the right-turn path. To the left of the ego vehicle, there is a lane with multiple vehicles traveling in the same direction. To the right, there is a lane with multiple vehicles also traveling in the same direction, adjacent to the dedicated right-turn lane. There are pedestrians on the sidewalks and static objects such as road signs and barriers present.", scene: "media/large_scene/large_scene_3_scene.jpg", focus: [0, 1] },
+        { type: "text",  cond: "The scene depicts a multi-lane intersection with a central roadway intersecting a perpendicular road from the left. The main road has two lanes in each direction. The perpendicular road has two lanes, one for each direction of travel. A traffic light at the intersection shows a green path allowing straight-through movement for the ego vehicle. Agents in the scene include multiple vehicles traveling in the same direction as the ego vehicle, others in the opposite direction or turning into the intersection, one pedestrian near the right-side crossing area, and one gray static object on the left side of the intersection.", scene: "media/large_scene/large_scene_4_scene.jpg", focus: [1, 1] }
+    ];
+    var lsCurrentTab = 0;
+
+    var lsScale = 1, lsTransX = 0, lsTransY = 0;
+    var lsMinScale = 1, lsMaxScale = 2;
+    var lsNatWidth = 0, lsNatHeight = 0;
+    var lsIsDragging = false;
+    var lsDragStartX = 0, lsDragStartY = 0, lsDragStartTX = 0, lsDragStartTY = 0;
+    var lsTouches = {};
+
+    var lsTabBtns = document.querySelectorAll("[data-ls-tab]");
+    var lsCondImageBox = document.getElementById("ls-cond-image-box");
+    var lsCondImg = document.getElementById("ls-cond-img");
+    var lsCondTextBox = document.getElementById("ls-cond-text-box");
+    var lsCondText = document.getElementById("ls-cond-text");
+    var lsMapContainer = document.getElementById("ls-map-container");
+    var lsMapImg = document.getElementById("ls-map-img");
+
+    if (!lsMapContainer) return;
+
+    // Minimap
+    var lsMinimap = document.createElement("div");
+    lsMinimap.className = "large-scene-minimap";
+    var lsMinimapImg = document.createElement("img");
+    lsMinimapImg.draggable = false;
+    lsMinimap.appendChild(lsMinimapImg);
+    var lsMinimapRect = document.createElement("div");
+    lsMinimapRect.className = "large-scene-minimap-rect";
+    lsMinimap.appendChild(lsMinimapRect);
+    lsMapContainer.appendChild(lsMinimap);
+
+    function lsUpdateMinimap() {
+        var cw = lsMapContainer.clientWidth;
+        var ch = lsMapContainer.clientHeight;
+        if (!lsNatWidth || !lsNatHeight || !cw || !ch) return;
+
+        var mmW = lsMinimap.clientWidth;
+        var mmH = lsMinimap.clientHeight;
+        if (!mmW || !mmH) return;
+
+        // Viewport rect in image-space (0-1)
+        var vx = -lsTransX / (lsNatWidth * lsScale);
+        var vy = -lsTransY / (lsNatHeight * lsScale);
+        var vw = cw / (lsNatWidth * lsScale);
+        var vh = ch / (lsNatHeight * lsScale);
+
+        // Fit image into minimap (contain)
+        var imgAspect = lsNatWidth / lsNatHeight;
+        var mmAspect = mmW / mmH;
+        var imgDrawW, imgDrawH, imgOffX, imgOffY;
+        if (imgAspect > mmAspect) {
+            imgDrawW = mmW;
+            imgDrawH = mmW / imgAspect;
+        } else {
+            imgDrawH = mmH;
+            imgDrawW = mmH * imgAspect;
+        }
+        imgOffX = (mmW - imgDrawW) / 2;
+        imgOffY = (mmH - imgDrawH) / 2;
+
+        // Position the minimap image
+        lsMinimapImg.style.width = imgDrawW + "px";
+        lsMinimapImg.style.height = imgDrawH + "px";
+        lsMinimapImg.style.left = imgOffX + "px";
+        lsMinimapImg.style.top = imgOffY + "px";
+
+        // Position viewport rect
+        lsMinimapRect.style.left = (imgOffX + vx * imgDrawW) + "px";
+        lsMinimapRect.style.top = (imgOffY + vy * imgDrawH) + "px";
+        lsMinimapRect.style.width = Math.min(vw * imgDrawW, imgDrawW) + "px";
+        lsMinimapRect.style.height = Math.min(vh * imgDrawH, imgDrawH) + "px";
+
+        // Hide rect when viewing entire image
+        if (vw >= 0.99 && vh >= 0.99) {
+            lsMinimapRect.style.display = "none";
+        } else {
+            lsMinimapRect.style.display = "";
+        }
+    }
+
+    // Zoom hint (persistent, like Google Maps)
+    var lsHint = document.createElement("div");
+    lsHint.className = "large-scene-map-hint";
+    var lsIsMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+    lsHint.textContent = (lsIsMac ? "\u2318" : "Ctrl") + " + scroll to zoom";
+    lsMapContainer.appendChild(lsHint);
+
+    // "Use cmd+scroll" warning tooltip
+    var lsWarnHint = document.createElement("div");
+    lsWarnHint.className = "large-scene-map-warn";
+    lsWarnHint.textContent = "Use " + (lsIsMac ? "\u2318" : "Ctrl") + " + scroll to zoom";
+    lsMapContainer.appendChild(lsWarnHint);
+    var lsWarnTimer = null;
+
+    function lsShowWarn() {
+        lsWarnHint.classList.add("visible");
+        clearTimeout(lsWarnTimer);
+        lsWarnTimer = setTimeout(function () {
+            lsWarnHint.classList.remove("visible");
+        }, 1500);
+    }
+
+    function lsClamp() {
+        var cw = lsMapContainer.clientWidth;
+        var ch = lsMapContainer.clientHeight;
+        var imgW = lsNatWidth * lsScale;
+        var imgH = lsNatHeight * lsScale;
+
+        if (imgW <= cw) {
+            lsTransX = (cw - imgW) / 2;
+        } else {
+            if (lsTransX > 0) lsTransX = 0;
+            if (lsTransX + imgW < cw) lsTransX = cw - imgW;
+        }
+
+        if (imgH <= ch) {
+            lsTransY = (ch - imgH) / 2;
+        } else {
+            if (lsTransY > 0) lsTransY = 0;
+            if (lsTransY + imgH < ch) lsTransY = ch - imgH;
+        }
+    }
+
+    function lsApplyTransform() {
+        lsClamp();
+        lsMapImg.style.transform = "translate(" + lsTransX + "px, " + lsTransY + "px) scale(" + lsScale + ")";
+        lsUpdateMinimap();
+    }
+
+    function lsFitImage() {
+        var cw = lsMapContainer.clientWidth;
+        var ch = lsMapContainer.clientHeight;
+        if (!cw || !ch || !lsNatWidth || !lsNatHeight) return;
+
+        lsMinScale = Math.min(cw / lsNatWidth, ch / lsNatHeight);
+        lsMaxScale = Math.max(1, lsMinScale);
+
+        // Start fully zoomed in, focused on the per-tab focus point
+        lsScale = lsMaxScale;
+        var focus = lsData[lsCurrentTab].focus;
+        var imgW = lsNatWidth * lsScale;
+        var imgH = lsNatHeight * lsScale;
+        // Place the focus point at the center of the container
+        lsTransX = cw / 2 - focus[0] * imgW;
+        lsTransY = ch / 2 - focus[1] * imgH;
+        lsApplyTransform();
+    }
+
+    function lsSyncHeight() {
+        requestAnimationFrame(function () {
+            // Match map height to just the conditioning content (image or text box), not the full column
+            var condEl = lsCondImageBox.style.display !== "none" ? lsCondImageBox : lsCondTextBox;
+            var contentH = condEl.offsetHeight;
+            lsMapContainer.style.height = contentH + "px";
+            lsFitImage();
+        });
+    }
+
+    function lsSelectTab(index) {
+        lsCurrentTab = index;
+        var data = lsData[index];
+        lsMinimapImg.src = data.scene;
+
+        for (var i = 0; i < lsTabBtns.length; i++) {
+            lsTabBtns[i].classList.toggle("active", i === index);
+        }
+
+        if (data.type === "image") {
+            lsCondImageBox.style.display = "";
+            lsCondTextBox.style.display = "none";
+            lsCondImg.src = data.cond;
+        } else {
+            lsCondImageBox.style.display = "none";
+            lsCondTextBox.style.display = "";
+            lsCondText.textContent = data.cond;
+        }
+
+        lsMapImg.src = data.scene;
+        lsMapImg.onload = function () {
+            lsNatWidth = lsMapImg.naturalWidth;
+            lsNatHeight = lsMapImg.naturalHeight;
+            lsSyncHeight();
+        };
+        if (lsMapImg.complete && lsMapImg.naturalWidth > 0) {
+            lsNatWidth = lsMapImg.naturalWidth;
+            lsNatHeight = lsMapImg.naturalHeight;
+            lsSyncHeight();
+        }
+    }
+
+    // Tab click handlers
+    for (var ti = 0; ti < lsTabBtns.length; ti++) {
+        (function (btn, idx) {
+            btn.addEventListener("click", function () { lsSelectTab(idx); });
+        })(lsTabBtns[ti], ti);
+    }
+
+    // Re-sync height when conditioning image loads
+    lsCondImg.addEventListener("load", function () { lsSyncHeight(); });
+
+    // Re-sync on resize
+    window.addEventListener("resize", function () { lsSyncHeight(); });
+
+    // Zoom (cmd/ctrl + wheel)
+    lsMapContainer.addEventListener("wheel", function (e) {
+        if (!e.metaKey && !e.ctrlKey) {
+            // Show warning tooltip, let page scroll normally
+            lsShowWarn();
+            return;
+        }
+        e.preventDefault();
+
+        var rect = lsMapContainer.getBoundingClientRect();
+        var cx = e.clientX - rect.left;
+        var cy = e.clientY - rect.top;
+
+        var zoomFactor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
+        var newScale = lsScale * zoomFactor;
+        newScale = Math.max(lsMinScale, Math.min(lsMaxScale, newScale));
+
+        var imgX = (cx - lsTransX) / lsScale;
+        var imgY = (cy - lsTransY) / lsScale;
+        lsScale = newScale;
+        lsTransX = cx - imgX * lsScale;
+        lsTransY = cy - imgY * lsScale;
+        lsApplyTransform();
+    }, { passive: false });
+
+    // Pan (mouse)
+    lsMapContainer.addEventListener("mousedown", function (e) {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        lsIsDragging = true;
+        lsDragStartX = e.clientX;
+        lsDragStartY = e.clientY;
+        lsDragStartTX = lsTransX;
+        lsDragStartTY = lsTransY;
+        lsMapContainer.classList.add("is-grabbing");
+    });
+
+    document.addEventListener("mousemove", function (e) {
+        if (!lsIsDragging) return;
+        lsTransX = lsDragStartTX + (e.clientX - lsDragStartX);
+        lsTransY = lsDragStartTY + (e.clientY - lsDragStartY);
+        lsApplyTransform();
+    });
+
+    document.addEventListener("mouseup", function () {
+        if (!lsIsDragging) return;
+        lsIsDragging = false;
+        lsMapContainer.classList.remove("is-grabbing");
+    });
+
+    // Touch support
+    lsMapContainer.addEventListener("touchstart", function (e) {
+        if (e.touches.length === 1) {
+            var t = e.touches[0];
+            lsIsDragging = true;
+            lsDragStartX = t.clientX;
+            lsDragStartY = t.clientY;
+            lsDragStartTX = lsTransX;
+            lsDragStartTY = lsTransY;
+        } else if (e.touches.length === 2) {
+            lsIsDragging = false;
+            var t0 = e.touches[0], t1 = e.touches[1];
+            lsTouches.dist = Math.hypot(t1.clientX - t0.clientX, t1.clientY - t0.clientY);
+            lsTouches.scale = lsScale;
+            lsTouches.midX = (t0.clientX + t1.clientX) / 2;
+            lsTouches.midY = (t0.clientY + t1.clientY) / 2;
+            lsTouches.transX = lsTransX;
+            lsTouches.transY = lsTransY;
+        }
+    }, { passive: true });
+
+    lsMapContainer.addEventListener("touchmove", function (e) {
+        e.preventDefault();
+        if (e.touches.length === 1 && lsIsDragging) {
+            var t = e.touches[0];
+            lsTransX = lsDragStartTX + (t.clientX - lsDragStartX);
+            lsTransY = lsDragStartTY + (t.clientY - lsDragStartY);
+            lsApplyTransform();
+        } else if (e.touches.length === 2 && lsTouches.dist) {
+            var t0 = e.touches[0], t1 = e.touches[1];
+            var newDist = Math.hypot(t1.clientX - t0.clientX, t1.clientY - t0.clientY);
+            var ratio = newDist / lsTouches.dist;
+            var newScale = Math.max(lsMinScale, Math.min(lsMaxScale, lsTouches.scale * ratio));
+
+            var rect = lsMapContainer.getBoundingClientRect();
+            var mx = lsTouches.midX - rect.left;
+            var my = lsTouches.midY - rect.top;
+            var imgX = (mx - lsTouches.transX) / lsTouches.scale;
+            var imgY = (my - lsTouches.transY) / lsTouches.scale;
+            lsScale = newScale;
+            lsTransX = mx - imgX * lsScale;
+            lsTransY = my - imgY * lsScale;
+            lsApplyTransform();
+        }
+    }, { passive: false });
+
+    lsMapContainer.addEventListener("touchend", function () {
+        lsIsDragging = false;
+        lsTouches = {};
+    }, { passive: true });
+
+    // Initialize
+    lsSelectTab(0);
+})();
+
 // Lazy-load videos: start loading when they scroll into view
 (function () {
     var videos = document.querySelectorAll('video[preload="none"]');

@@ -370,13 +370,23 @@
         </div>
 
         <!-- Text-Conditioned Video -->
-        <div class="result-figure">
-          <video autoplay loop playsinline muted preload="none">
-            <source src="media/text-conditioned.mp4" type="video/mp4">
-            Your browser does not support the video tag.
-          </video>
-          <div class="video-caption">
-            <span>Prompt-Conditioned Scenario and Video Generation.</span>
+        <!-- Prompt-Conditioned Scene Generation -->
+        <div class="interactive-panel" id="text-cond-interactive">
+          <h3>Prompt-Conditioned Video Generation</h3>
+          <div class="content has-text-justified">
+            <p>
+              We can combine a rolled-out BEV scenario with our adapted prompt-conditioned Wan&nbsp;2.2 video model, to create consistent appearance variations across text prompts.
+              The clips below show the same underlying scenario generated under different weather and lighting conditions:
+            </p>
+          </div>
+          <div class="result-figure">
+            <video autoplay loop playsinline muted preload="none">
+              <source src="media/text-conditioned.mp4" type="video/mp4">
+              Your browser does not support the video tag.
+            </video>
+            <div class="video-caption">
+              <span>Prompt-Conditioned Scenario and Video Generation.</span>
+            </div>
           </div>
         </div>
 

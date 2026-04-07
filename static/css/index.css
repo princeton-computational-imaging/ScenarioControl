@@ -88,10 +88,14 @@ body {
 /* Method figure */
 .method-figure {
     max-width: 100%;
-    margin: 32px 0 0;
+    margin: 48px 0;
     text-align: center;
     width: 100%;
     overflow: hidden;
+}
+
+.method-figure:last-child {
+    margin-bottom: 0;
 }
 
 .method-figure img {
@@ -216,7 +220,10 @@ body {
 .interactive-subsection {
     margin-top: 18px;
     padding-top: 18px;
-    border-top: 1px solid var(--line);
+}
+
+.interactive-subsection .result-figure {
+    margin-top: 18px;
 }
 
 /* Scene / conditioning columns */
@@ -824,9 +831,14 @@ body {
 }
 
 /* Audio overview / podcast player */
+#audio-overview {
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
+}
+
 .audio-player-wrapper {
     max-width: 720px;
-    margin: 32px auto 0;
+    margin: 24px auto 0;
 }
 
 .audio-player-wrapper .plyr--audio {

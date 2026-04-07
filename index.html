@@ -127,14 +127,20 @@
         <h2 class="title is-3">Summary</h2>
         <div class="content has-text-justified">
           <p>
-            Given a text prompt or an input image, the model synthesizes diverse and realistic 3D scenario rollouts,
-            including map structure, dynamic agents, pedestrians, infrastructure, and ego-view observations.
-            The model operates in a vectorized latent space that jointly represents road layout and actor dynamics.
+            ScenarioControl is the first vision-language control mechanism for learned driving scenario generation.
+            Given a text prompt or an input image, it synthesizes diverse, realistic 3D scenario rollouts &mdash;
+            including map structure, reactive agents over time, pedestrians, infrastructure, and ego-view observations.
+            The model generates scenes in a vectorized latent space that jointly represents road structure and dynamic agents.
+            With this, it can produce temporally consistent scenario rollouts from the perspective different actors in the 
+            scene, as well as long-horizon continuation of driving scenarios.
           </p>
           <p>
-            We model scenes as variable-length vector tokens and condition generation with prompt, image, and depth signals.
-            A gated cross-global control mechanism combines dense cross-attention with a compact global-context route,
-            enabling controllable edits while preserving topology, geometric consistency, and long-range rollout coherence.
+            To connect multimodal control with sparse vectorized scene elements, we introduce a
+            <em>cross-global control mechanism</em> that combines standard cross-attention with a lightweight
+            global-context branch, enabling fine-grained control over road layout and traffic conditions while preserving
+            realism. Extensive experiments validate that the control adherence and fidelity of ScenarioControl is 
+            favorable to all tested methods across all experiments. To facilitate further training and evaluation, 
+            we release a dataset with text annotations aligned to vectorized map structures and visual context.
           </p>
         </div>
       </div>
@@ -157,15 +163,34 @@
         <h2 class="title is-3 has-text-centered">Method</h2>
         <div class="content has-text-justified">
           <p>
-            ScenarioControl generates initial scenes with a controllable latent diffusion model conditioned on text prompts or agent-view images.
-            We use a gated cross-global control mechanism to fuse dense conditioning signals with
-            sparse scene tokens, and a count-injection head for controlling lane and agent cardinality. The generated scenario is
-            then rolled out with behavior simulation and projected into camera space to condition LoRA-adapted Wan 2.2
-            for photorealistic video generation and continuation.
+            ScenarioControl models each scene as a graph of objects and lane centerlines within a 64&times;64&nbsp;m
+            bird's-eye view, augmented with per-object elevation so generated scenarios can be faithfully reprojected
+            into the image domain. A controllable latent diffusion model &mdash; conditioned on text prompts or
+            agent-view images &mdash; produces this vectorized scene representation in a single forward pass. To fuse
+            dense conditioning signals with sparse scene tokens, we introduce a <em>gated cross-global control
+            mechanism</em> that combines standard cross-attention with a compact global-context branch, while a
+            separate count-injection head provides explicit control over lane and agent cardinality. Together these
+            components enable fine-grained edits to road layout and traffic composition without sacrificing topological
+            or geometric consistency.
           </p>
         </div>
         <div class="method-figure">
-          <img src="media/method_figure_v3.png" alt="Method Overview" loading="lazy">
+          <img src="media/method_figure_v3.png" alt="Scenario Generation Pipeline" loading="lazy">
+        </div>
+        <div class="content has-text-justified">
+          <p>
+            The vectorized scene representation supports existing BEV-space behavior simulation, which we project
+            back into the camera frame to obtain wireframe control signals for video generation. These signals
+            condition a LoRA-adapted Wan&nbsp;2.2 (5B) video model, which we train in two variants for additional 
+            appearance control: an image-conditioned model that uses the first frame for appearance, and a 
+            prompt-conditioned model whose appearance is set by a text description. Because video generation is 
+            grounded in the vectorized scenario, we can re-render the wireframe from arbitrary camera extrinsics 
+            and synthesize coherent rollouts from the perspectives of agents other than the ego vehicle, 
+            supporting both video continuation and entirely novel traffic situations.
+          </p>
+        </div>
+        <div class="method-figure">
+          <img src="media/video_generation_v3.png" alt="Scenario-Controlled Video Generation Pipeline" loading="lazy">
         </div>
       </div>
     </div>
@@ -178,7 +203,7 @@
   <div class="container is-max-desktop">
     <div class="columns is-centered">
       <div class="column is-full-width">
-        <h2 class="title is-3 has-text-centered">Listen to the Paper</h2>
+        <h2 class="title is-3 has-text-centered">Listen to Paper Overview</h2>
         <div class="audio-player-wrapper">
           <audio id="paper-audio-player" controls preload="none">
             <source src="media/ScenarioControl_podcast.m4a" type="audio/mp4">
@@ -213,6 +238,14 @@
         <!-- Image-Conditioned Scene Generation -->
         <div class="interactive-panel" id="img-cond-interactive">
           <h3>Image-Conditioned Scene Generation</h3>
+          <div class="content has-text-justified">
+            <p>
+              Given a single agent-view image, ScenarioControl recovers a plausible 3D scenario consistent with what
+              the camera sees. Pick a conditioning image below and step through several diverse generations: the road
+              topology and visible agents stay faithful to the input while unobserved regions are filled in with varied
+              but coherent layouts.
+            </p>
+          </div>
           <div class="thumb-row" id="img-cond-thumbs"></div>
 
           <div class="interactive-view">
@@ -236,8 +269,13 @@
           </div>
 
           <div class="interactive-subsection" id="img-cond-proj-interactive">
+            <div class="content has-text-justified">
+              <p>
+                We project the generated scenarios back into the original image to highlight how closely the synthesized geometry aligns with the real scene.
+                Hover over the image to see the projection of the generated scenario over the conditioning image.
+              </p>
+            </div>
             <div class="thumb-row" id="img-cond-proj-thumbs"></div>
-
             <div class="interactive-view interactive-view-single">
               <div class="interactive-scene-column">
                 <div class="interactive-image-box" id="proj-image-box">
@@ -249,6 +287,13 @@
           </div>
 
           <div class="interactive-subsection">
+            <div class="content has-text-justified">
+              <p>
+                To produce video rollouts, we simulate the generated scenarios forward in time with CTRL-Sim and feed
+                the resulting wireframe trajectories, together with the original conditioning frame, to our
+                first-frame-conditioned video model. The clips below show the full pipeline end-to-end:
+              </p>
+            </div>
             <div class="result-figure">
               <video autoplay loop playsinline muted preload="none">
                 <source src="media/image-conditioned.mp4" type="video/mp4">
@@ -264,6 +309,14 @@
         <!-- Prompt-Conditioned Scene Generation -->
         <div class="interactive-panel" id="text-cond-interactive">
           <h3>Prompt-Conditioned Scene Generation</h3>
+          <div class="content has-text-justified">
+            <p>
+              ScenarioControl also generates scenarios directly from natural-language descriptions of road structure
+              and traffic. Toggle the attributes below (intersection type, road shape, pedestrian presence, and
+              lane count) to assemble a prompt and see the corresponding generations update. The samples reflect
+              the requested attributes while still varying in realistic, fine-grained detail.
+            </p>
+          </div>
 
           <div class="text-cond-view">
             <div class="text-cond-left-column">
@@ -331,6 +384,17 @@
         <div class="interactive-panel" id="large-scene-interactive">
           <h3>Large Scene Generation</h3>
 
+          <div class="content has-text-justified">
+            <p>
+              Although our diffusion model is trained on local 64&times;64&nbsp;m scenes, we extend it to much larger
+              environments via iterative outpainting. Starting from an image- or prompt-conditioned initial scene, we
+              repeatedly grow the layout outward, producing diverse multi-block road networks: distinct
+              intersection types, lane configurations, and agent distributions that remain coherent in topology
+              end-to-end. The viewer below lets you explore extensions generated from a few different conditioning
+              images and prompts.
+            </p>
+          </div>
+
           <div class="tabs is-centered">
             <ul>
               <li class="is-active"><a data-ls-tab="0">Image 1</a></li>
@@ -363,6 +427,14 @@
         <!-- Additional Generated Driving Scenarios -->
         <div class="result-figure">
           <h3>Additional Generated Driving Scenarios</h3>
+          <div class="content has-text-justified">
+            <p>
+              A gallery of additional rollouts produced by the first-frame-conditioned video model. Each clip starts
+              from a real driving frame and is continued forward in time using the corresponding ScenarioControl
+              scenario as the underlying control signal, illustrating the ability of our method to generate diverse
+              scenarios while remaining grounded in real-world traffic conditions.
+            </p>
+          </div>
           <video autoplay loop playsinline muted preload="none">
             <source src="media/firstframe-conditioned.mp4" type="video/mp4">
             Your browser does not support the video tag.
@@ -372,6 +444,17 @@
         <!-- Comparison to Baselines -->
         <div class="result-figure">
           <h3>Comparison to Baselines</h3>
+          <div class="content has-text-justified">
+            <p>
+              We compare our cross-global control mechanism against <em>concatenation</em> &mdash; directly
+              concatenating conditioning features with the scene tokens, a common fallback for fusing dense control
+              signals into sparse token sequences. Across both image- and prompt-conditioned settings, our method
+              delivers substantially better adherence to the conditioning while preserving scene realism: in the
+              image-conditioned setting alone, it reduces collisions by 43.4% and improves global control (Control Sensitivity 
+              Correlation) by 52.8% relative to concatenation. The pairs below show, for the same conditioning image, 
+              the scene produced by concatenation and the scene produced by our method.
+            </p>
+          </div>
           <div class="baseline-compare">
             <div class="baseline-compare-labels">
               <span>Conditioning Image</span>

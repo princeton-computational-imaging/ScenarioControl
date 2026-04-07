@@ -822,3 +822,43 @@ body {
         flex-direction: column;
     }
 }
+
+/* Audio overview / podcast player */
+.audio-player-wrapper {
+    max-width: 720px;
+    margin: 32px auto 0;
+}
+
+.audio-player-wrapper .plyr--audio {
+    border: 1px solid var(--line);
+    background: var(--surface-strong);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.audio-player-wrapper .plyr--audio .plyr__controls {
+    background: var(--surface-strong);
+    color: var(--text);
+    padding: 14px 18px;
+}
+
+.audio-disclaimer {
+    margin-top: 14px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-style: italic;
+}
+
+.audio-disclaimer .fa-robot {
+    margin-right: 6px;
+}
+
+/* Theme Plyr to match the site accent */
+:root {
+    --plyr-color-main: var(--accent);
+    --plyr-audio-control-color: var(--text);
+    --plyr-audio-control-color-hover: #ffffff;
+    --plyr-audio-control-background-hover: var(--accent);
+    --plyr-range-fill-background: var(--accent);
+}

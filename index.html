@@ -17,6 +17,7 @@
   <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
   <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css">
   <link rel="stylesheet" href="./static/css/index.css">
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -138,16 +139,9 @@
         </div>
       </div>
     </div>
-  </div>
-</section>
-
-
-<!-- Teaser Video -->
-<section class="section">
-  <div class="container is-max-desktop">
     <div class="result-figure">
       <video id="teaser" autoplay loop playsinline muted width="100%">
-        <source src="media/video_teaser_eccv.mp4" type="video/mp4">
+        <source src="media/scenariocontrol_diffusion.mp4" type="video/mp4">
         Your browser does not support the video tag.
       </video>
     </div>
@@ -172,6 +166,28 @@
         </div>
         <div class="method-figure">
           <img src="media/method_figure_v3.png" alt="Method Overview" loading="lazy">
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- Audio Overview -->
+<section class="section" id="audio-overview">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered">
+      <div class="column is-full-width">
+        <h2 class="title is-3 has-text-centered">Listen to the Paper</h2>
+        <div class="audio-player-wrapper">
+          <audio id="paper-audio-player" controls preload="none">
+            <source src="media/ScenarioControl_podcast.m4a" type="audio/mp4">
+            Your browser does not support the audio element.
+          </audio>
+          <p class="audio-disclaimer">
+            <i class="fas fa-robot" aria-hidden="true"></i>
+            This audio overview is AI-generated and may contain inaccuracies. Refer to the paper for authoritative content.
+          </p>
         </div>
       </div>
     </div>
@@ -419,6 +435,18 @@
     </div>
   </div>
 </footer>
+
+<script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    new Plyr('#paper-audio-player', {
+      controls: ['play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'settings', 'download'],
+      settings: ['speed'],
+      speed: { selected: 1, options: [0.75, 1, 1.25, 1.5, 1.75, 2] },
+      invertTime: false
+    });
+  });
+</script>
 
 </body>
 </html>

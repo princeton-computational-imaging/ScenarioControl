@@ -83,12 +83,14 @@ body {
     --shadow: none;
     --radius-xl: 24px;
     --radius-lg: 16px;
+    --space-section: 48px;
+    --space-block: 24px;
 }
 
 /* Method figure */
 .method-figure {
     max-width: 100%;
-    margin: 48px 0;
+    margin: var(--space-section) 0;
     text-align: center;
     width: 100%;
     overflow: hidden;
@@ -107,13 +109,13 @@ body {
 /* Result figure */
 .result-figure {
     width: 100%;
-    margin-top: 48px;
+    margin-top: var(--space-section);
 }
 
-.result-figure h3 {
+h3 {
     font-size: 1.1rem;
     font-weight: 600;
-    margin: 0 0 16px;
+    margin: var(--space-section) 0 14px;
     text-align: center;
     letter-spacing: 0.01em;
 }
@@ -147,17 +149,45 @@ body {
     text-align: center;
 }
 
-/* Interactive panels */
-.interactive-panel {
-    margin-top: 48px;
+/* Prompt-conditioned video legend table */
+.prompt-legend {
+    margin: var(--space-block) auto 0;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    color: var(--text);
+}
+.prompt-legend th {
+    font-weight: 600;
+    color: var(--muted);
+    text-align: left;
+    padding: 6px 16px 6px 0;
+    border-bottom: 1px solid var(--line);
+}
+.prompt-legend td {
+    padding: 6px 16px 6px 0;
+    vertical-align: middle;
+}
+.prompt-legend-prompt {
+    color: var(--muted);
+    font-style: italic;
+}
+.prompt-legend-icon {
+    width: 36px;
+    height: 36px;
+    vertical-align: middle;
+}
+.prompt-legend-prompt mark {
+    background: var(--accent-soft);
+    color: inherit;
+    padding: 1px 3px;
+    border-radius: 3px;
 }
 
-.interactive-panel h3 {
-    margin: 0 0 14px;
-    font-size: 1.1rem;
-    text-align: center;
-    font-weight: 600;
+/* Interactive panels */
+.interactive-panel {
+    margin-top: var(--space-section);
 }
+
 
 /* Thumbnail strip */
 .thumb-row {
@@ -218,12 +248,15 @@ body {
 }
 
 .interactive-subsection {
-    margin-top: 18px;
-    padding-top: 18px;
+    margin-top: var(--space-block);
+}
+
+h3 + .interactive-subsection {
+    margin-top: 0;
 }
 
 .interactive-subsection .result-figure {
-    margin-top: 18px;
+    margin-top: var(--space-block);
 }
 
 /* Scene / conditioning columns */
@@ -257,10 +290,36 @@ body {
     min-height: 0;
 }
 
-.interactive-scene-column .interactive-image-box img {
+.interactive-scene-column .interactive-image-box {
+    position: relative;
+}
+
+.interactive-scene-column .interactive-image-box img,
+.interactive-scene-column .interactive-image-box video {
     height: 100%;
     width: 100%;
+    object-fit: contain;
+    display: block;
     border: 1px solid var(--line);
+}
+
+/* Phase progress bar overlaid at the bottom of the scene video */
+.scene-progress {
+    position: absolute;
+    left: 1px;
+    right: 1px;
+    bottom: 1px;
+    height: 4px;
+    background: rgba(0, 0, 0, 0.45);
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.scene-progress-bar {
+    height: 100%;
+    width: 0%;
+    background: #ffffff;
+    will-change: width;
 }
 
 .interactive-cond-column .interactive-image-box {
@@ -276,12 +335,6 @@ body {
 
 .interactive-cond-column .column-heading {
     flex-shrink: 0;
-}
-
-/* Scene image rotation */
-#selected-scene-image {
-    transform: rotate(-90deg);
-    transform-origin: center center;
 }
 
 /* Scene image wrapper with overlay arrows */

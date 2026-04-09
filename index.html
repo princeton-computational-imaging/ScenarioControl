@@ -163,15 +163,12 @@
         <h2 class="title is-3 has-text-centered">Method</h2>
         <div class="content has-text-justified">
           <p>
-            ScenarioControl models each scene as a graph of objects and lane centerlines within a 64&times;64&nbsp;m
-            bird's-eye view, augmented with per-object elevation so generated scenarios can be faithfully reprojected
-            into the image domain. A controllable latent diffusion model &mdash; conditioned on text prompts or
-            agent-view images &mdash; produces this vectorized scene representation in a single forward pass. To fuse
-            dense conditioning signals with sparse scene tokens, we introduce a <em>gated cross-global control
-            mechanism</em> that combines standard cross-attention with a compact global-context branch, while a
-            separate count-injection head provides explicit control over lane and agent cardinality. Together these
-            components enable fine-grained edits to road layout and traffic composition without sacrificing topological
-            or geometric consistency.
+            ScenarioControl models each scene as a graph of objects and lane centerlines in a bird's-eye view,
+            with per-object elevation for image-domain reprojection. A controllable latent diffusion model
+            (conditioned on text prompts or agent-view images) produces this vectorized representation in a
+            single forward pass. A <em>gated cross-global control mechanism</em> fuses conditioning signals with
+            sparse scene tokens, while a count-injection head controls lane and agent cardinality - enabling
+            fine-grained edits to road layout and traffic composition.
           </p>
         </div>
         <div class="method-figure">
@@ -179,40 +176,14 @@
         </div>
         <div class="content has-text-justified">
           <p>
-            The vectorized scene representation supports existing BEV-space behavior simulation, which we project
-            back into the camera frame to obtain wireframe control signals for video generation. These signals
-            condition a LoRA-adapted Wan&nbsp;2.2 (5B) video model, which we train in two variants for additional 
-            appearance control: an image-conditioned model that uses the first frame for appearance, and a 
-            prompt-conditioned model whose appearance is set by a text description. Because video generation is 
-            grounded in the vectorized scenario, we can re-render the wireframe from arbitrary camera extrinsics 
-            and synthesize coherent rollouts from the perspectives of agents other than the ego vehicle, 
-            supporting both video continuation and entirely novel traffic situations.
+            The vectorized scene representation feeds existing BEV-space behavior simulation, whose output is
+            projected into wireframe control signals for video generation. We train two video-model variants:
+            an image-conditioned model that derives appearance from the first frame, and a prompt-conditioned
+            model whose appearance follows a text description. 
           </p>
         </div>
         <div class="method-figure">
           <img src="media/video_generation_v3.png" alt="Scenario-Controlled Video Generation Pipeline" loading="lazy">
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-
-<!-- Audio Overview -->
-<section class="section" id="audio-overview">
-  <div class="container is-max-desktop">
-    <div class="columns is-centered">
-      <div class="column is-full-width">
-        <h2 class="title is-3 has-text-centered">Listen to Paper Overview</h2>
-        <div class="audio-player-wrapper">
-          <audio id="paper-audio-player" controls preload="none">
-            <source src="media/ScenarioControl_podcast.m4a" type="audio/mp4">
-            Your browser does not support the audio element.
-          </audio>
-          <p class="audio-disclaimer">
-            <i class="fas fa-robot" aria-hidden="true"></i>
-            This audio overview is AI-generated and may contain inaccuracies. Refer to the paper for authoritative content.
-          </p>
         </div>
       </div>
     </div>
@@ -225,25 +196,41 @@
   <div class="container is-max-desktop">
     <div class="columns is-centered">
       <div class="column is-full-width">
-        <h2 class="title is-3 has-text-centered">Results</h2>
+        <h2 class="title is-3 has-text-centered">Experimental Findings</h2>
         <div class="content has-text-justified">
           <p>
             We visualize initial scenes generated via ScenarioControl under both image and prompt conditioning, alongside
             video rendering of the resulting driving rollouts. Across conditions, the method produces diverse and
-            realistic 3D scenarios with consistent road geometry, plausible agent behavior, and coherent ego-view
+            realistic scenarios with consistent road geometry, plausible agent behavior, and coherent ego-view
             observations.
           </p>
         </div>
 
         <!-- Image-Conditioned Scene Generation -->
-        <div class="interactive-panel" id="img-cond-interactive">
-          <h3>Image-Conditioned Scene Generation</h3>
+        <h3>Image-Conditioned Scene Generation</h3>
+        <div class="interactive-subsection" id="img-cond-proj-interactive">
           <div class="content has-text-justified">
             <p>
-              Given a single agent-view image, ScenarioControl recovers a plausible 3D scenario consistent with what
-              the camera sees. Pick a conditioning image below and step through several diverse generations: the road
-              topology and visible agents stay faithful to the input while unobserved regions are filled in with varied
-              but coherent layouts.
+              We generate a scenario conditioned on an image. In the visualization below, we then project the generated scenarios back into the original image to highlight how closely the synthesized
+              geometry aligns with the real scene. Hover over the image to see the generated scenario and projection overlay.
+            </p>
+          </div>
+          <div class="thumb-row" id="img-cond-proj-thumbs"></div>
+          <div class="interactive-view interactive-view-single">
+            <div class="interactive-scene-column">
+              <div class="interactive-image-box" id="proj-image-box">
+                <img id="selected-proj-result-image" src="media/img_cond_proj/img_cond_proj_1_orig_matched.jpg" alt="Selected matched projection result">
+                <span class="proj-hover-hint" id="proj-hover-hint">Hover to show generated scenario</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="interactive-panel" id="img-cond-interactive">
+          <div class="content has-text-justified">
+            <p>
+              Pick a conditioning image below to see the generated scenario play out as a video rollout.
+              Note that road topology and visible agents stay faithful to the input, and unobserved regions are filled in
+              coherently.
             </p>
           </div>
           <div class="thumb-row" id="img-cond-thumbs"></div>
@@ -252,35 +239,19 @@
             <div class="interactive-cond-column">
               <span class="column-heading">Conditioning Image</span>
               <div class="interactive-image-box">
-                <img id="selected-cond-image" src="media/img_cond/img_cond_1.jpg" alt="Selected conditioning image">
+                <img id="selected-cond-image" src="media/img_cond/images/00c25e426ce555fc.jpg" alt="Selected conditioning image">
               </div>
             </div>
 
             <div class="interactive-scene-column">
-              <span class="column-heading" id="scene-index-label">Sample 1 / 4</span>
-              <div class="scene-image-wrapper">
-                <div class="interactive-image-box">
-                  <img id="selected-scene-image" src="media/img_cond/scene_img_cond_1_1.jpg" alt="Selected generated scene">
-                </div>
-                <button type="button" id="scene-prev" class="scene-arrow scene-arrow-left" aria-label="Previous sample"><i class="fas fa-chevron-left"></i></button>
-                <button type="button" id="scene-next" class="scene-arrow scene-arrow-right" aria-label="Next sample"><i class="fas fa-chevron-right"></i></button>
-              </div>
-            </div>
-          </div>
-
-          <div class="interactive-subsection" id="img-cond-proj-interactive">
-            <div class="content has-text-justified">
-              <p>
-                We project the generated scenarios back into the original image to highlight how closely the synthesized geometry aligns with the real scene.
-                Hover over the image to see the projection of the generated scenario over the conditioning image.
-              </p>
-            </div>
-            <div class="thumb-row" id="img-cond-proj-thumbs"></div>
-            <div class="interactive-view interactive-view-single">
-              <div class="interactive-scene-column">
-                <div class="interactive-image-box" id="proj-image-box">
-                  <img id="selected-proj-result-image" src="media/img_cond_proj/img_cond_proj_1_orig_matched.jpg" alt="Selected matched projection result">
-                  <span class="proj-hover-hint" id="proj-hover-hint">Hover to show generated scenario</span>
+              <span class="column-heading" id="scene-phase-label">Conditional Generation</span>
+              <div class="interactive-image-box">
+                <video id="selected-scene-video" muted playsinline preload="auto">
+                  <source src="media/img_cond/movies_3s/00c25e426ce555fc_seed69_seed0.mp4" type="video/mp4">
+                  Your browser does not support the video tag.
+                </video>
+                <div class="scene-progress" aria-hidden="true">
+                  <div class="scene-progress-bar" id="scene-progress-bar"></div>
                 </div>
               </div>
             </div>
@@ -304,6 +275,7 @@
               </div>
             </div>
           </div>
+
         </div>
 
         <!-- Prompt-Conditioned Scene Generation -->
@@ -312,7 +284,7 @@
           <div class="content has-text-justified">
             <p>
               ScenarioControl also generates scenarios directly from natural-language descriptions of road structure
-              and traffic. Toggle the attributes below (intersection type, road shape, pedestrian presence, and
+              and traffic. Toggle the attributes below (intersection type, pedestrian presence, and
               lane count) to assemble a prompt and see the corresponding generations update. The samples reflect
               the requested attributes while still varying in realistic, fine-grained detail.
             </p>
@@ -328,13 +300,6 @@
                     <button type="button" class="config-pill" data-value="T">T</button>
                     <button type="button" class="config-pill active" data-value="four-way">Four-way</button>
                     <button type="button" class="config-pill" data-value="complex">Complex</button>
-                  </div>
-                </div>
-                <div class="config-category" data-category="curvature">
-                  <span class="config-category-label">Road Shape</span>
-                  <div class="config-pills">
-                    <button type="button" class="config-pill active" data-value="straight">Straight</button>
-                    <button type="button" class="config-pill" data-value="curved">Curved</button>
                   </div>
                 </div>
                 <div class="config-category" data-category="pedestrians">
@@ -375,7 +340,7 @@
           <h3>Prompt-Conditioned Video Generation</h3>
           <div class="content has-text-justified">
             <p>
-              We can combine a rolled-out BEV scenario with our adapted prompt-conditioned Wan&nbsp;2.2 video model, to create consistent appearance variations across text prompts.
+              We can combine a rolled-out BEV scenario with a prompt-conditioned video generation model (e.g., Wan&nbsp;2.2, Cosmos) to create consistent appearance variations across text prompts.
               The clips below show the same underlying scenario generated under different weather and lighting conditions:
             </p>
           </div>
@@ -388,6 +353,38 @@
               <span>Prompt-Conditioned Scenario and Video Generation.</span>
             </div>
           </div>
+          <table class="prompt-legend">
+            <thead>
+              <tr>
+                <th>Icon</th>
+                <th>Prompt</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><img class="prompt-legend-icon" src="media/icons/overcast.svg" alt="Slightly overcast"></td>
+                <td class="prompt-legend-prompt">
+                  This image depicts a suburban environment characterized by a red brick apartment complex with traditional architectural elements. The road is a two-lane asphalt surface in good condition with clear double yellow lines, bordered by concrete sidewalks. The scene is set on <mark>a partly cloudy day with soft, diffused light suggesting late morning or early afternoon</mark>, and features mature trees and well-maintained grassy areas alongside the buildings.
+                </td>
+              </tr>
+              <tr>
+                <td><img class="prompt-legend-icon" src="media/icons/rainy.svg" alt="Rainy"></td>
+                <td class="prompt-legend-prompt">
+                  The image depicts an urban environment with a mix of modern and traditional mid-rise buildings featuring large windows and brick facades. The road is a wet, paved city street with multiple lanes and pedestrian sidewalks, surrounded by trees and green patches. <mark>Overcast skies and diffused lighting suggest a rainy day during daylight hours</mark>, likely in the morning or afternoon.
+                </td>
+              </tr>
+              <tr>
+                <td><img class="prompt-legend-icon" src="media/icons/night.svg" alt="Night"></td>
+                <td class="prompt-legend-prompt">This image captures a downtown urban street <mark>at night, illuminated by warm sodium streetlights and colorful neon signs</mark> from nearby shops and restaurants. The road is a multi-lane asphalt surface with reflective lane markings that glow under the artificial lighting. Modern mid-rise buildings with glass facades line both sides of the street, and <mark>the dark sky above shows no stars due to light pollution</mark>, while a few street trees are visible as dark silhouettes against the lit storefronts.</td>
+              </tr>
+              <tr>
+                <td><img class="prompt-legend-icon" src="media/icons/snow.svg" alt="Snowy"></td>
+                <td class="prompt-legend-prompt">
+                  This image depicts a quiet suburban street <mark>blanketed in fresh snow</mark>, with low-rise residential buildings featuring <mark>snow-covered roofs</mark> and bare deciduous trees lining the sidewalks. The road is a two-lane surface <mark>partially cleared of snow</mark>, with tire tracks visible on the wet asphalt. The sky is overcast and pale gray, casting flat, <mark>diffused light typical of a cold winter morning</mark>, while <mark>patches of white snow cover the lawns and parked cars</mark> along the curb.
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
         <!-- Large Scene Generation -->
@@ -435,7 +432,7 @@
         </div>
 
         <!-- Additional Generated Driving Scenarios -->
-        <div class="result-figure">
+        <!-- <div class="result-figure">
           <h3>Additional Generated Driving Scenarios</h3>
           <div class="content has-text-justified">
             <p>
@@ -449,10 +446,10 @@
             <source src="media/firstframe-conditioned.mp4" type="video/mp4">
             Your browser does not support the video tag.
           </video>
-        </div>
+        </div> -->
 
         <!-- Comparison to Baselines -->
-        <div class="result-figure">
+        <!-- <div class="result-figure">
           <h3>Comparison to Baselines</h3>
           <div class="content has-text-justified">
             <p>
@@ -482,8 +479,30 @@
               <img src="media/viz_baselines/ours_2.jpg" alt="Our method sample 2" loading="lazy">
             </div>
           </div>
-        </div>
+        </div> -->
 
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- Audio Overview -->
+<section class="section" id="audio-overview">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered">
+      <div class="column is-full-width">
+        <h2 class="title is-3 has-text-centered">Listen to Paper Overview</h2>
+        <div class="audio-player-wrapper">
+          <audio id="paper-audio-player" controls preload="none">
+            <source src="media/ScenarioControl_podcast.m4a" type="audio/mp4">
+            Your browser does not support the audio element.
+          </audio>
+          <p class="audio-disclaimer">
+            <i class="fas fa-robot" aria-hidden="true"></i>
+            This audio overview is AI-generated and may contain inaccuracies. Refer to the paper for authoritative content.
+          </p>
+        </div>
       </div>
     </div>
   </div>

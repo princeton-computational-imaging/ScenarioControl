@@ -10,27 +10,35 @@ $(document).ready(function() {
 
 // ScenarioControl interactive galleries
 (function () {
-    var conditionImages = [
-        "img_cond_1.jpg",
-        "img_cond_2.jpg",
-        "img_cond_3.jpg",
-        "img_cond_4.jpg",
-        "img_cond_5.jpg",
-        "img_cond_6.jpg",
-        "img_cond_7.jpg",
-        "img_cond_8.jpg"
+    // Each entry pairs a conditioning image with its rollout video.
+    // Swap the `video` field to change which seed is shown for a given image.
+    var imgCondEntries = [
+        { image: "76da778ff251508d.jpg", video: "76da778ff251508d.mp4" },
+        { image: "bbe92413054e59c4.jpg", video: "bbe92413054e59c4.mp4" },
+        { image: "6a3775d893ef5c11.jpg", video: "6a3775d893ef5c11.mp4" },
+        { image: "0bd948440a695247.jpg", video: "0bd948440a695247.mp4" },
+        { image: "0fc75a8299825a12.jpg", video: "0fc75a8299825a12.mp4" },
+        { image: "2fd9c9c8aa745ccb.jpg", video: "2fd9c9c8aa745ccb.mp4" },
+        { image: "32db5c8feb07567c.jpg", video: "32db5c8feb07567c.mp4" },
+        { image: "3d4fa046a5ad5f9d.jpg", video: "3d4fa046a5ad5f9d.mp4" },
+        { image: "4fc9d3cec33b559b.jpg", video: "4fc9d3cec33b559b.mp4" },
     ];
 
-    var sceneCountPerCondition = 4;
     var selectedCondition = 1;
-    var selectedScene = 1;
 
     var thumbsContainer = document.getElementById("img-cond-thumbs");
     var condImageEl = document.getElementById("selected-cond-image");
-    var sceneImageEl = document.getElementById("selected-scene-image");
-    var sceneIndexLabel = document.getElementById("scene-index-label");
-    var prevBtn = document.getElementById("scene-prev");
-    var nextBtn = document.getElementById("scene-next");
+    var sceneVideoEl = document.getElementById("selected-scene-video");
+    var sceneVideoSourceEl = sceneVideoEl ? sceneVideoEl.querySelector("source") : null;
+    var scenePhaseLabelEl = document.getElementById("scene-phase-label");
+    var sceneProgressBarEl = document.getElementById("scene-progress-bar");
+
+    // How long to hold on frame 0 (the conditioning frame) before each rollout play.
+    var SCENE_VIDEO_HOLD_MS = 2000;
+    var sceneVideoHoldTimeoutId = null;
+    var sceneProgressRafId = null;
+    var sceneHoldStartTime = 0;
+    var scenePhase = "hold"; // "hold" (showing frame 0) | "play" (rollout)
 
     var projConditionIndices = [1, 2, 3, 4, 5, 6, 7, 9, 10, 12, 13, 14];
     var selectedProjCondition = 1;
@@ -42,14 +50,14 @@ $(document).ready(function() {
 
     var textCondConfigs = [
         { intersection: "four-way", curvature: "straight", pedestrians: "no",  lanes: "more", sources: [1, 7], prompt: "The scene is a four-way intersection featuring multiple lanes in each direction. Multiple vehicles exist." },
-        { intersection: "T",        curvature: "straight", pedestrians: "no",  lanes: "more", sources: [2, 8], prompt: "The scene is a T-intersection. Multiple vehicles exist." },
-        { intersection: "none",     curvature: "curved",   pedestrians: "yes", lanes: "more", sources: [3, 9], prompt: "The scene depicts a multi-lane road with a curved layout. There are also pedestrians near the road." },
+        { intersection: "T",        curvature: "straight", pedestrians: "no",  lanes: "less", sources: [2, 8], prompt: "The scene is a T-intersection. Multiple vehicles exist." },
         { intersection: "none",     curvature: "straight", pedestrians: "no",  lanes: "more", sources: [4],    prompt: "The scene depicts a multi-lane road with a left-turning ahead." },
         { intersection: "none",     curvature: "straight", pedestrians: "no",  lanes: "less", sources: [5],    prompt: "The scene depicts a narrow, vertically oriented road." },
-        { intersection: "complex",  curvature: "straight", pedestrians: "no",  lanes: "more", sources: [6],    prompt: "The scene depicts a multi-lane intersection with a complex road topology." }
+        { intersection: "complex",  curvature: "straight", pedestrians: "no",  lanes: "more", sources: [6],    prompt: "The scene depicts a multi-lane intersection with a complex road topology." },
+        { intersection: "none",     curvature: "curved",   pedestrians: "yes", lanes: "more", sources: [3, 9], prompt: "The scene depicts a multi-lane road with a curved layout. There are also pedestrians near the road." }
     ];
-    var textCondCategories = ["intersection", "curvature", "pedestrians", "lanes"];
-    var textCondSelection = { intersection: "four-way", curvature: "straight", pedestrians: "no", lanes: "more" };
+    var textCondCategories = ["intersection", "pedestrians", "lanes"];
+    var textCondSelection = { intersection: "four-way", pedestrians: "no", lanes: "more" };
     var textCondCurrentConfig = null;
     var textCondPage = 0;
 
@@ -60,8 +68,12 @@ $(document).ready(function() {
     var textCondPrevBtn = document.getElementById("text-cond-prev");
     var textCondNextBtn = document.getElementById("text-cond-next");
 
-    function getSceneImagePath(condIndex, sceneIndex) {
-        return "media/img_cond/scene_img_cond_" + condIndex + "_" + sceneIndex + ".jpg";
+    function getCondImagePath(condIndex) {
+        return "media/img_cond/images/" + imgCondEntries[condIndex - 1].image;
+    }
+
+    function getSceneVideoPath(condIndex) {
+        return "media/img_cond/movies_5s/" + imgCondEntries[condIndex - 1].video;
     }
 
     function getProjOrigPath(condIndex) {
@@ -77,8 +89,10 @@ $(document).ready(function() {
     }
 
     function renderThumbs() {
-        thumbsContainer.innerHTML = "";
-        conditionImages.forEach(function (filename, idx) {
+        while (thumbsContainer.firstChild) {
+            thumbsContainer.removeChild(thumbsContainer.firstChild);
+        }
+        imgCondEntries.forEach(function (entry, idx) {
             var condIndex = idx + 1;
             var btn = document.createElement("button");
             btn.type = "button";
@@ -86,13 +100,12 @@ $(document).ready(function() {
             btn.setAttribute("aria-label", "Select conditioning image " + condIndex);
 
             var img = document.createElement("img");
-            img.src = "media/img_cond/" + filename;
+            img.src = getCondImagePath(condIndex);
             img.alt = "Conditioning preview " + condIndex;
 
             btn.appendChild(img);
             btn.addEventListener("click", function () {
                 selectedCondition = condIndex;
-                selectedScene = 1;
                 updateView();
             });
 
@@ -149,33 +162,86 @@ $(document).ready(function() {
         if (!interactiveViewEl) return;
         var condW = condImageEl.naturalWidth;
         var condH = condImageEl.naturalHeight;
-        var sceneW = sceneImageEl.naturalWidth;
-        var sceneH = sceneImageEl.naturalHeight;
         if (condW && condH) interactiveViewEl.style.setProperty("--cond-aspect", (condW / condH).toFixed(4));
-        if (sceneW && sceneH) interactiveViewEl.style.setProperty("--scene-aspect", (sceneH / sceneW).toFixed(4));
+        if (sceneVideoEl) {
+            var vw = sceneVideoEl.videoWidth;
+            var vh = sceneVideoEl.videoHeight;
+            if (vw && vh) interactiveViewEl.style.setProperty("--scene-aspect", (vw / vh).toFixed(4));
+        }
     }
 
     condImageEl.addEventListener("load", syncAspectRatios);
-    sceneImageEl.addEventListener("load", syncAspectRatios);
+    if (sceneVideoEl) {
+        sceneVideoEl.addEventListener("loadedmetadata", syncAspectRatios);
+    }
+
+    // Pause on frame 0 for a moment, then play the rollout. On end, repeat — this
+    // gives the viewer a chance to anchor on the conditioning frame each loop.
+    // The phase label and progress bar reflect which phase we're in.
+    function setScenePhase(phase) {
+        scenePhase = phase;
+        if (scenePhaseLabelEl) {
+            scenePhaseLabelEl.textContent = phase === "hold" ? "Conditional Generation" : "Rollout";
+        }
+        if (sceneProgressBarEl) {
+            sceneProgressBarEl.style.width = "0%";
+        }
+    }
+
+    function cancelSceneProgressTick() {
+        if (sceneProgressRafId !== null) {
+            cancelAnimationFrame(sceneProgressRafId);
+            sceneProgressRafId = null;
+        }
+    }
+
+    function tickSceneProgress() {
+        sceneProgressRafId = requestAnimationFrame(tickSceneProgress);
+        if (!sceneProgressBarEl || !sceneVideoEl) return;
+        var progress;
+        if (scenePhase === "hold") {
+            progress = Math.min(1, (performance.now() - sceneHoldStartTime) / SCENE_VIDEO_HOLD_MS);
+        } else {
+            var dur = sceneVideoEl.duration;
+            progress = (dur && isFinite(dur) && dur > 0)
+                ? Math.min(1, sceneVideoEl.currentTime / dur)
+                : 0;
+        }
+        sceneProgressBarEl.style.width = (progress * 100).toFixed(2) + "%";
+    }
+
+    function scheduleSceneVideoCycle() {
+        if (!sceneVideoEl) return;
+        clearTimeout(sceneVideoHoldTimeoutId);
+        cancelSceneProgressTick();
+        sceneVideoEl.pause();
+        try { sceneVideoEl.currentTime = 0; } catch (e) { /* seek may fail if not seekable yet */ }
+        setScenePhase("hold");
+        sceneHoldStartTime = performance.now();
+        tickSceneProgress();
+        sceneVideoHoldTimeoutId = setTimeout(function () {
+            setScenePhase("play");
+            var p = sceneVideoEl.play();
+            if (p && typeof p.catch === "function") p.catch(function () {});
+        }, SCENE_VIDEO_HOLD_MS);
+    }
+
+    if (sceneVideoEl) {
+        // Fires after the new source is ready (initial load and every source swap).
+        sceneVideoEl.addEventListener("loadeddata", scheduleSceneVideoCycle);
+        // Manual loop — so we can hold on frame 0 between plays.
+        sceneVideoEl.addEventListener("ended", scheduleSceneVideoCycle);
+    }
 
     function updateView() {
-        condImageEl.src = "media/img_cond/" + conditionImages[selectedCondition - 1];
-        sceneImageEl.src = getSceneImagePath(selectedCondition, selectedScene);
-        sceneIndexLabel.textContent = "Sample " + selectedScene + " / " + sceneCountPerCondition;
+        condImageEl.src = getCondImagePath(selectedCondition);
+        if (sceneVideoEl && sceneVideoSourceEl) {
+            clearTimeout(sceneVideoHoldTimeoutId);
+            cancelSceneProgressTick();
+            sceneVideoSourceEl.src = getSceneVideoPath(selectedCondition);
+            sceneVideoEl.load(); // triggers loadeddata → scheduleSceneVideoCycle
+        }
         renderThumbs();
-    }
-
-    if (prevBtn) {
-        prevBtn.addEventListener("click", function () {
-            selectedScene = selectedScene === 1 ? sceneCountPerCondition : selectedScene - 1;
-            updateView();
-        });
-    }
-    if (nextBtn) {
-        nextBtn.addEventListener("click", function () {
-            selectedScene = selectedScene === sceneCountPerCondition ? 1 : selectedScene + 1;
-            updateView();
-        });
     }
 
     function updateProjView() {
@@ -188,7 +254,7 @@ $(document).ready(function() {
             : getProjMatchedPath(selectedProjCondition);
 
         if (projPhaseLabel) {
-            projPhaseLabel.textContent = projShowingGenerated ? "Generated Scenario" : "Input \u2192 Projection";
+            projPhaseLabel.textContent = projShowingGenerated ? "Conditional Generation" : "Input \u2192 Projection";
         }
 
         renderProjThumbs();
@@ -250,7 +316,7 @@ $(document).ready(function() {
                     return;
                 }
                 // Find nearest config that has this value (locked)
-                var tempSel = { intersection: selection.intersection, curvature: selection.curvature,
+                var tempSel = { intersection: selection.intersection,
                     pedestrians: selection.pedestrians, lanes: selection.lanes };
                 tempSel[targetCat] = val;
                 var best = findNearestConfig(tempSel, targetCat);

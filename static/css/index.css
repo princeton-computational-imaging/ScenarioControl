@@ -450,6 +450,12 @@ h3 + .interactive-subsection {
     width: 100%;
 }
 
+.text-cond-dialog mark {
+    background: var(--accent-soft);
+    color: inherit;
+    padding: 1px 3px;
+}
+
 .text-cond-carousel {
     display: flex;
     flex-direction: column;
@@ -552,6 +558,56 @@ h3 + .interactive-subsection {
 
 .config-pill.unavailable:hover {
     opacity: 0.55;
+}
+
+/* Extra prompt examples */
+.extra-prompts-view {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+}
+
+.extra-prompts-selectors {
+    display: flex;
+    flex-direction: column;
+}
+
+.extra-prompt-pill {
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    background: rgba(255, 255, 255, 0.45);
+    color: var(--text);
+    font-size: 0.82rem;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: background 200ms ease, color 200ms ease, border-color 200ms ease;
+    outline: none;
+    white-space: nowrap;
+    text-align: left;
+}
+
+.extra-prompt-pill + .extra-prompt-pill {
+    margin-top: -1px;
+}
+
+.extra-prompt-pill:hover {
+    background: rgba(0, 0, 0, 0.06);
+    border-color: rgba(0, 0, 0, 0.25);
+}
+
+.extra-prompt-pill.active {
+    background: rgba(0, 0, 0, 0.75);
+    color: #ffffff;
+    border-color: rgba(0, 0, 0, 0.8);
+    z-index: 1;
+    position: relative;
+}
+
+.extra-prompts-image-box img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border: 1px solid var(--line);
 }
 
 .large-scene-viewer {
@@ -856,6 +912,28 @@ h3 + .interactive-subsection {
 
     .text-cond-view {
         grid-template-columns: 1fr;
+    }
+
+    .extra-prompts-view {
+        grid-template-columns: 1fr;
+    }
+
+    .extra-prompts-selectors {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .extra-prompt-pill {
+        flex: 1 1 auto;
+        text-align: center;
+        white-space: normal;
+        font-size: 0.75rem;
+        padding: 6px 8px;
+    }
+
+    .extra-prompt-pill + .extra-prompt-pill {
+        margin-top: 0;
+        margin-left: -1px;
     }
 
     .config-pill {

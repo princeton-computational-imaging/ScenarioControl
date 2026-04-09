@@ -439,6 +439,50 @@ $(document).ready(function() {
     resolveTextCondConfig();
 })();
 
+// Additional prompt examples
+(function () {
+    var extraPrompts = [
+        "ROAD & CONTROL: A two-lane road approaching a T-intersection with a right-turn lane from the right. AGENTS: The Ego vehicle is in the right-turn lane, preparing to turn right. Another is located on the right side, <mark>off the road near the intersection</mark>.",
+        "ROAD & CONTROL: <mark>Two parallel straight lanes separated by a median</mark>; no intersections or traffic lights. AGENTS: Vehicles in adjacent lanes and approaching from opposite direction.",
+        "ROAD & CONTROL: Road splits into <mark>left and right turn lanes</mark>; ego follows left-turn lane merging into a multi-lane road. AGENTS: <mark>A few vehicles ahead in the turn lane</mark>.",
+        "ROAD & CONTROL: <mark>Five-lane road</mark> with a <mark>right-turn-only merge from the right</mark>. AGENTS: Several vehicles on the lanes.",
+        "ROAD & CONTROL: Three-lane one-way oad with a <mark>left-turn-only lane intersecting from the left</mark>; <mark>all lanes green</mark>. AGENTS: Vehicles ahead in ego lane; <mark>pedestrians on right</mark>.",
+        "ROAD & CONTROL: Two-lane road approaching a <mark>signalized intersection</mark> with east-west roads; <mark>dedicated turn and through lanes on all approaches</mark>. AGENTS: Several vehicles on the road.",
+        "ROAD & CONTROL: The road has two lanes in a single direction, <mark>gently curving left ahead</mark>. No intersections, merges, splits, crosswalks, or traffic lights are visible along ego\u2019s path. AGENTS: The ego vehicle is centered in the left lane with <mark>no other agents or obstacles nearby</mark>."
+    ];
+
+    var extraSelected = 0;
+    var extraTextEl = document.getElementById("extra-prompt-text");
+    var extraImgEl = document.getElementById("extra-prompt-img");
+    var extraPills = document.querySelectorAll(".extra-prompt-pill");
+
+    if (!extraTextEl || !extraImgEl || !extraPills.length) return;
+
+    function updateExtraPrompts() {
+        extraTextEl.innerHTML = extraPrompts[extraSelected].replace(" AGENTS:", "<br><br>AGENTS:");
+        extraImgEl.src = "media/text_cond_extra/" + (extraSelected + 1) + ".png";
+
+        for (var i = 0; i < extraPills.length; i++) {
+            if (parseInt(extraPills[i].getAttribute("data-extra-idx"), 10) === extraSelected) {
+                extraPills[i].classList.add("active");
+            } else {
+                extraPills[i].classList.remove("active");
+            }
+        }
+    }
+
+    for (var i = 0; i < extraPills.length; i++) {
+        (function (pill) {
+            pill.addEventListener("click", function () {
+                extraSelected = parseInt(pill.getAttribute("data-extra-idx"), 10);
+                updateExtraPrompts();
+            });
+        })(extraPills[i]);
+    }
+
+    updateExtraPrompts();
+})();
+
 // Large Scene interactive map viewer
 (function () {
     // focus: [x, y] in 0-1 range — point in the image to center on at max zoom

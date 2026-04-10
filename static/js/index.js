@@ -73,7 +73,7 @@ $(document).ready(function() {
     }
 
     function getSceneVideoPath(condIndex) {
-        return "media/img_cond/movies_5s/" + imgCondEntries[condIndex - 1].video;
+        return "media/img_cond/movies/" + imgCondEntries[condIndex - 1].video;
     }
 
     function getProjOrigPath(condIndex) {

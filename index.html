@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description"
+        content="ScenarioControl: Vision-Language Controllable Vectorized Latent Scenario Generation">
+  <meta name="keywords" content="ScenarioControl, scenario generation, autonomous driving, diffusion model, vision-language">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ScenarioControl: Vision-Language Controllable Vectorized Latent Scenario Generation</title>
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+        rel="stylesheet">
+
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <script src="./static/js/bulma-carousel.min.js"></script>
+  <script src="./static/js/bulma-slider.min.js"></script>
+  <script defer src="./static/js/index.js"></script>
+</head>
+<body>
+
+
+<!-- Hero / Overview (Fullscreen Video) -->
+<section class="hero is-fullheight has-video-background" id="overview">
+
+  <!-- Background video -->
+  <video class="hero-bg-video" id="hero-bg-video" autoplay loop playsinline muted>
+    <source src="media/text-conditioned.mp4" type="video/mp4">
+  </video>
+
+  <!-- Dark overlay -->
+  <div class="hero-video-overlay"></div>
+
+  <!-- Content -->
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-1 publication-title">ScenarioControl: Vision-language Controllable Vectorized Latent Scenario Generation</h1>
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">Lili Gao<sup>1*</sup>,</span>
+            <span class="author-block">Yanbo Xu<sup>2*</sup>,</span>
+            <span class="author-block">William Koch<sup>2*</sup>,</span>
+            <span class="author-block">Samuele Ruffino<sup>1</sup>,</span>
+            <span class="author-block">Luke Rowe<sup>3</sup>,</span>
+            <span class="author-block">Behdad Chalaki<sup>1</sup>,</span>
+            <span class="author-block">Dmitriy Rivkin<sup>1</sup>,</span>
+            <span class="author-block">Julian Ost<sup>1,2</sup>,</span>
+            <span class="author-block">Roger Girgis<sup>1,3</sup>,</span>
+            <span class="author-block">Mario Bijelic<sup>1,2</sup>,</span>
+            <span class="author-block">Felix Heide<sup>1,2</sup></span>
+          </div>
+
+          <div class="is-size-6 publication-authors" style="margin-top: 4px;">
+            <span>* Equal contribution</span>
+          </div>
+
+          <div class="is-size-5 publication-authors" style="margin-top: 8px;">
+            <span class="author-block"><sup>1</sup>Torc Robotics,</span>
+            <span class="author-block"><sup>2</sup>Princeton University,</span>
+            <span class="author-block"><sup>3</sup>Mila</span>
+          </div>
+
+          <div class="column has-text-centered">
+            <div class="publication-links">
+              <!-- Paper Link -->
+              <span class="link-block">
+                <a href="media/ScenarioControl.pdf"
+                   class="external-link button is-normal is-rounded is-outlined is-light">
+                  <span class="icon">
+                      <i class="fas fa-file-pdf"></i>
+                  </span>
+                  <span>Paper</span>
+                </a>
+              </span>
+              <!-- arXiv Link -->
+              <span class="link-block">
+                <a href="https://arxiv.org/abs/2604.17147"
+                   class="external-link button is-normal is-rounded is-outlined is-light">
+                  <span class="icon">
+                      <i class="ai ai-arxiv"></i>
+                  </span>
+                  <span>arXiv</span>
+                </a>
+              </span>
+              <!-- Code Link -->
+              <span class="link-block">
+                <a href="https://github.com/princeton-computational-imaging/ScenarioControl/tree/main"
+                   class="external-link button is-normal is-rounded is-outlined is-light">
+                  <span class="icon">
+                      <i class="fab fa-github"></i>
+                  </span>
+                  <span>Code*</span>
+                </a>
+              </span>
+            </div>
+            <p class="is-size-10" style="margin-top: 6px; opacity: 0.8; color: white;">
+              *Code to be released.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scroll indicator -->
+  <div class="hero-foot has-text-centered" style="padding-bottom: 2rem;">
+    <span class="scroll-indicator">
+      <i class="fas fa-chevron-down fa-2x"></i>
+    </span>
+  </div>
+
+</section>
+
+
+<!-- Summary -->
+<section class="section" id="abstract">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Summary</h2>
+        <div class="content has-text-justified">
+          <p>
+            ScenarioControl is the first vision-language control mechanism for learned driving scenario generation.
+            Given a text prompt or an input image, it synthesizes diverse, realistic 3D scenario rollouts &mdash;
+            including map structure, reactive agents over time, pedestrians, infrastructure, and ego-view observations.
+            The model generates scenes in a vectorized latent space that jointly represents road structure and dynamic agents.
+            With this, it can produce temporally consistent scenario rollouts from the perspective different actors in the 
+            scene, as well as long-horizon continuation of driving scenarios.
+          </p>
+          <p>
+            To connect multimodal control with sparse vectorized scene elements, we introduce a
+            <em>cross-global control mechanism</em> that combines standard cross-attention with a lightweight
+            global-context branch, enabling fine-grained control over road layout and traffic conditions while preserving
+            realism. Extensive experiments validate that the control adherence and fidelity of ScenarioControl is 
+            favorable to all tested methods across all experiments. To facilitate further training and evaluation, 
+            we release a dataset with text annotations aligned to vectorized map structures and visual context.
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="result-figure">
+      <video id="teaser" autoplay loop playsinline muted width="100%">
+        <source src="media/scenariocontrol_diffusion.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+    </div>
+  </div>
+</section>
+
+
+<!-- Method -->
+<section class="section" id="method">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered">
+      <div class="column is-full-width">
+        <h2 class="title is-3 has-text-centered">Method</h2>
+        <div class="content has-text-justified">
+          <p>
+            ScenarioControl models each scene as a graph of objects and lane centerlines in a bird's-eye view,
+            with per-object elevation for image-domain reprojection. A controllable latent diffusion model
+            (conditioned on text prompts or agent-view images) produces this vectorized representation in a
+            single forward pass. A <em>gated cross-global control mechanism</em> fuses conditioning signals with
+            sparse scene tokens, while a count-injection head controls lane and agent cardinality - enabling
+            fine-grained edits to road layout and traffic composition.
+          </p>
+        </div>
+        <div class="method-figure">
+          <img src="media/method_figure_v3.png" alt="Scenario Generation Pipeline" loading="lazy">
+        </div>
+        <div class="content has-text-justified">
+          <p>
+            The vectorized scene representation feeds existing BEV-space behavior simulation, whose output is
+            projected into wireframe control signals for video generation. We train two video-model variants:
+            an image-conditioned model that derives appearance from the first frame, and a prompt-conditioned
+            model whose appearance follows a text description. 
+          </p>
+        </div>
+        <div class="method-figure">
+          <img src="media/video_generation_v3.png" alt="Scenario-Controlled Video Generation Pipeline" loading="lazy">
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- Results -->
+<section class="section" id="results">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered">
+      <div class="column is-full-width">
+        <h2 class="title is-3 has-text-centered">Experimental Findings</h2>
+        <div class="content has-text-justified">
+          <p>
+            We visualize initial scenes generated via ScenarioControl under both image and prompt conditioning, alongside
+            video rendering of the resulting driving rollouts. Across conditions, the method produces diverse and
+            realistic scenarios with consistent road geometry, plausible agent behavior, and coherent ego-view
+            observations.
+          </p>
+        </div>
+
+        <!-- Image-Conditioned Scene Generation -->
+        <h3>Image-Conditioned Scene Generation</h3>
+        <div class="interactive-subsection" id="img-cond-proj-interactive">
+          <div class="content has-text-justified">
+            <p>
+              We generate initial scenes conditioned on an image. In the visualization below, we then project the generated scenes back into the original image to highlight how closely the synthesized
+              geometry aligns with the real scene. Hover over the image to see the generated scenes and projection overlay.
+            </p>
+          </div>
+          <div class="thumb-row" id="img-cond-proj-thumbs"></div>
+          <div class="interactive-view interactive-view-single">
+            <div class="interactive-scene-column">
+              <div class="interactive-image-box" id="proj-image-box">
+                <img id="selected-proj-result-image" src="media/img_cond_proj/img_cond_proj_1_orig_matched.jpg" alt="Selected matched projection result">
+                <span class="proj-hover-hint" id="proj-hover-hint">Hover to show generated scenes</span>
+              </div>
+            </div>
+          </div>
+          <div class="video-caption">
+            <span>Phase 1: Image-conditioned scene generation (right), and reprojected back into ego-view (left).</span>
+          </div>
+        </div>
+        <div class="interactive-panel" id="img-cond-interactive">
+          <div class="content has-text-justified">
+            <p>
+              Pick a conditioning image below to see the generated scenario play out as a video rollout.
+              Note that road topology and visible agents stay faithful to the input, and unobserved regions are filled in
+              coherently.
+            </p>
+          </div>
+          <div class="thumb-row" id="img-cond-thumbs"></div>
+
+          <div class="interactive-view">
+            <div class="interactive-cond-column">
+              <span class="column-heading">Conditioning Image</span>
+              <div class="interactive-image-box">
+                <img id="selected-cond-image" src="media/img_cond/images/00c25e426ce555fc.jpg" alt="Selected conditioning image">
+              </div>
+            </div>
+
+            <div class="interactive-scene-column">
+              <span class="column-heading" id="scene-phase-label">Conditional Generation</span>
+              <div class="interactive-image-box">
+                <video id="selected-scene-video" muted playsinline preload="auto">
+                  <source src="media/img_cond/movies_3s/00c25e426ce555fc_seed69_seed0.mp4" type="video/mp4">
+                  Your browser does not support the video tag.
+                </video>
+                <div class="scene-progress" aria-hidden="true">
+                  <div class="scene-progress-bar" id="scene-progress-bar"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="video-caption">
+            <span>Phase 2: Behavioral rollout of image-conditioned generated scene using a simulator (right).</span>
+          </div>
+
+          <div class="interactive-subsection">
+            <div class="content has-text-justified">
+              <p>
+                To produce video rollouts, we simulate the generated scenarios forward in time with a behavior simulator and feed
+                the resulting wireframe trajectories, together with the original conditioning frame, to our
+                first-frame-conditioned video model. The clips below show the full pipeline end-to-end:
+              </p>
+            </div>
+            <div class="result-figure">
+              <video autoplay loop playsinline muted preload="none">
+                <source src="media/image-conditioned.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+              </video>
+              <div class="video-caption">
+                <span>Phase 3: End-to-end video rollout (left) of image-conditioned scene generation and rollout (right).</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Prompt-Conditioned Scene Generation -->
+        <div class="interactive-panel" id="text-cond-interactive">
+          <h3>Prompt-Conditioned Scene Generation</h3>
+          <div class="content has-text-justified">
+            <p>
+              ScenarioControl also generates scenes directly from natural-language descriptions of road structure
+              and traffic. Toggle the attributes below (intersection type, pedestrian presence, and
+              lane count) to assemble a prompt and see the corresponding generations update. The samples reflect
+              the requested attributes while still varying in realistic, fine-grained detail.
+            </p>
+          </div>
+
+          <div class="text-cond-view">
+            <div class="text-cond-left-column">
+              <div class="text-cond-configurator" id="text-cond-configurator">
+                <div class="config-category" data-category="intersection">
+                  <span class="config-category-label">Intersection</span>
+                  <div class="config-pills">
+                    <button type="button" class="config-pill" data-value="none">N/A</button>
+                    <button type="button" class="config-pill" data-value="T">T</button>
+                    <button type="button" class="config-pill active" data-value="four-way">Four-way</button>
+                    <button type="button" class="config-pill" data-value="complex">Complex</button>
+                  </div>
+                </div>
+                <div class="config-category" data-category="pedestrians">
+                  <span class="config-category-label">Pedestrians</span>
+                  <div class="config-pills">
+                    <button type="button" class="config-pill active" data-value="no">N/A</button>
+                    <button type="button" class="config-pill" data-value="yes">Yes</button>
+                  </div>
+                </div>
+                <div class="config-category" data-category="lanes">
+                  <span class="config-category-label"># Lanes</span>
+                  <div class="config-pills">
+                    <button type="button" class="config-pill" data-value="less">Fewer</button>
+                    <button type="button" class="config-pill active" data-value="more">More</button>
+                  </div>
+                </div>
+              </div>
+              <div class="text-cond-dialog" id="selected-text-cond-prompt"></div>
+            </div>
+            <div class="text-cond-carousel" id="text-cond-carousel">
+              <div class="scene-image-wrapper">
+                <div class="text-cond-carousel-track" id="text-cond-carousel-track">
+                  <img src="media/text_cond/text_cond_1_1.jpg" alt="Sample 1">
+                  <img src="media/text_cond/text_cond_1_2.jpg" alt="Sample 2">
+                  <img src="media/text_cond/text_cond_1_3.jpg" alt="Sample 3">
+                </div>
+                <button type="button" id="text-cond-prev" class="scene-arrow scene-arrow-left" aria-label="Previous page"><i class="fas fa-chevron-left"></i></button>
+                <button type="button" id="text-cond-next" class="scene-arrow scene-arrow-right" aria-label="Next page"><i class="fas fa-chevron-right"></i></button>
+              </div>
+              <span class="column-heading" id="text-cond-page-label"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Additional Prompt Examples -->
+        <div class="interactive-panel" id="extra-prompts">
+          <h3>Additional Prompt Examples</h3>
+          <div class="extra-prompts-view">
+            <div class="extra-prompts-selectors">
+              <button type="button" class="extra-prompt-pill active" data-extra-idx="0">Exact Agent Placement</button>
+              <button type="button" class="extra-prompt-pill" data-extra-idx="1">Exact Lane Placement</button>
+              <button type="button" class="extra-prompt-pill" data-extra-idx="2">Exact Turn Lanes</button>
+              <button type="button" class="extra-prompt-pill" data-extra-idx="3">Complex Merge &amp; Lane Count</button>
+              <button type="button" class="extra-prompt-pill" data-extra-idx="4">Green Traffic Light &amp; Pedestrians</button>
+              <button type="button" class="extra-prompt-pill" data-extra-idx="5">Multi-Approach Traffic Lights</button>
+              <button type="button" class="extra-prompt-pill" data-extra-idx="6">Gentle Curve</button>
+            </div>
+            <div class="text-cond-dialog" id="extra-prompt-text"></div>
+            <div class="extra-prompts-image-box">
+              <img id="extra-prompt-img" src="media/text_cond_extra/1.png" alt="Prompt example generation">
+            </div>
+          </div>
+        </div>
+
+        <!-- Text-Conditioned Video -->
+        <!-- Prompt-Conditioned Scene Generation -->
+        <div class="interactive-panel" id="text-cond-interactive">
+          <h3>Prompt-Conditioned Video Generation</h3>
+          <div class="content has-text-justified">
+            <p>
+              We can combine a rolled-out BEV scenario with a prompt-conditioned video generation model (e.g., Wan&nbsp;2.2, Cosmos) to create consistent appearance variations across text prompts.
+              The clips below show the same underlying scenario generated under different weather and lighting conditions:
+            </p>
+          </div>
+          <div class="result-figure">
+            <video autoplay loop playsinline muted preload="none">
+              <source src="media/text-conditioned.mp4" type="video/mp4">
+              Your browser does not support the video tag.
+            </video>
+            <div class="video-caption">
+              <span>Prompt-Conditioned Scenario and Video Generation.</span>
+            </div>
+          </div>
+          <table class="prompt-legend">
+            <thead>
+              <tr>
+                <th>Icon</th>
+                <th>Prompt</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><img class="prompt-legend-icon" src="media/icons/overcast.svg" alt="Slightly overcast"></td>
+                <td class="prompt-legend-prompt">
+                  This image depicts a suburban environment characterized by a red brick apartment complex with traditional architectural elements. The road is a two-lane asphalt surface in good condition with clear double yellow lines, bordered by concrete sidewalks. The scene is set on <mark>a partly cloudy day with soft, diffused light suggesting late morning or early afternoon</mark>, and features mature trees and well-maintained grassy areas alongside the buildings.
+                </td>
+              </tr>
+              <tr>
+                <td><img class="prompt-legend-icon" src="media/icons/rainy.svg" alt="Rainy"></td>
+                <td class="prompt-legend-prompt">
+                  The image depicts an urban environment with a mix of modern and traditional mid-rise buildings featuring large windows and brick facades. The road is a wet, paved city street with multiple lanes and pedestrian sidewalks, surrounded by trees and green patches. <mark>Overcast skies and diffused lighting suggest a rainy day during daylight hours</mark>, likely in the morning or afternoon.
+                </td>
+              </tr>
+              <tr>
+                <td><img class="prompt-legend-icon" src="media/icons/night.svg" alt="Night"></td>
+                <td class="prompt-legend-prompt">This image captures a downtown urban street <mark>at night, illuminated by warm sodium streetlights and colorful neon signs</mark> from nearby shops and restaurants. The road is a multi-lane asphalt surface with reflective lane markings that glow under the artificial lighting. Modern mid-rise buildings with glass facades line both sides of the street, and <mark>the dark sky above shows no stars due to light pollution</mark>, while a few street trees are visible as dark silhouettes against the lit storefronts.</td>
+              </tr>
+              <tr>
+                <td><img class="prompt-legend-icon" src="media/icons/snow.svg" alt="Snowy"></td>
+                <td class="prompt-legend-prompt">
+                  This image depicts a quiet suburban street <mark>blanketed in fresh snow</mark>, with low-rise residential buildings featuring <mark>snow-covered roofs</mark> and bare deciduous trees lining the sidewalks. The road is a two-lane surface <mark>partially cleared of snow</mark>, with tire tracks visible on the wet asphalt. The sky is overcast and pale gray, casting flat, <mark>diffused light typical of a cold winter morning</mark>, while <mark>patches of white snow cover the lawns and parked cars</mark> along the curb.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Large Scene Generation -->
+        <div class="interactive-panel" id="large-scene-interactive">
+          <h3>Large Scene Generation</h3>
+
+          <div class="content has-text-justified">
+            <p>
+              Although our diffusion model is trained on local 64&times;64&nbsp;m scenes, we extend it to much larger
+              environments via iterative outpainting. Starting from an image- or prompt-conditioned initial scene, we
+              repeatedly grow the layout outward, producing diverse multi-block road networks: distinct
+              intersection types, lane configurations, and agent distributions that remain coherent in topology
+              end-to-end. The viewer below lets you explore extensions generated from a few different conditioning
+              images and prompts.
+            </p>
+          </div>
+
+          <div class="tabs is-centered">
+            <ul>
+              <li class="is-active"><a data-ls-tab="0">Image 1</a></li>
+              <li><a data-ls-tab="1">Image 2</a></li>
+              <li><a data-ls-tab="2">Prompt 1</a></li>
+              <li><a data-ls-tab="3">Prompt 2</a></li>
+            </ul>
+          </div>
+
+          <div class="large-scene-viewer">
+            <div class="large-scene-cond" id="ls-cond-column">
+              <span class="column-heading">Conditioning</span>
+              <div class="large-scene-cond-image" id="ls-cond-image-box">
+                <img id="ls-cond-img" src="media/large_scene/large_scene_1_cond.jpg" alt="Conditioning image for large scene">
+              </div>
+              <div class="large-scene-cond-dialog" id="ls-cond-text-box" style="display:none;">
+                <p id="ls-cond-text"></p>
+              </div>
+            </div>
+
+            <div class="large-scene-map-col">
+              <span class="column-heading">Generated Scene</span>
+              <div class="large-scene-map" id="ls-map-container">
+                <img id="ls-map-img" src="media/large_scene/large_scene_1_scene.jpg" alt="Generated large scene" draggable="false">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Additional Generated Driving Scenarios -->
+        <!-- <div class="result-figure">
+          <h3>Additional Generated Driving Scenarios</h3>
+          <div class="content has-text-justified">
+            <p>
+              A gallery of additional rollouts produced by the first-frame-conditioned video model. Each clip starts
+              from a real driving frame and is continued forward in time using the corresponding ScenarioControl
+              scenario as the underlying control signal, illustrating the ability of our method to generate diverse
+              scenarios while remaining grounded in real-world traffic conditions.
+            </p>
+          </div>
+          <video autoplay loop playsinline muted preload="none">
+            <source src="media/firstframe-conditioned.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+          </video>
+        </div> -->
+
+        <!-- Comparison to Baselines -->
+        <!-- <div class="result-figure">
+          <h3>Comparison to Baselines</h3>
+          <div class="content has-text-justified">
+            <p>
+              We compare our cross-global control mechanism against <em>concatenation</em> &mdash; directly
+              concatenating conditioning features with the scene tokens, a common fallback for fusing dense control
+              signals into sparse token sequences. Across both image- and prompt-conditioned settings, our method
+              delivers substantially better adherence to the conditioning while preserving scene realism: in the
+              image-conditioned setting alone, it reduces collisions by 43.4% and improves global control (Control Sensitivity 
+              Correlation) by 52.8% relative to concatenation. The pairs below show, for the same conditioning image, 
+              the scene produced by concatenation and the scene produced by our method.
+            </p>
+          </div>
+          <div class="baseline-compare">
+            <div class="baseline-compare-labels">
+              <span>Conditioning Image</span>
+              <span>Concatenation</span>
+              <span>Our Method</span>
+            </div>
+            <div class="baseline-compare-row">
+              <img src="media/viz_baselines/gt_1.jpg" alt="Conditioning image sample 1" loading="lazy">
+              <img src="media/viz_baselines/concat_1.jpg" alt="Concatenation baseline sample 1" loading="lazy">
+              <img src="media/viz_baselines/ours_1.jpg" alt="Our method sample 1" loading="lazy">
+            </div>
+            <div class="baseline-compare-row">
+              <img src="media/viz_baselines/gt_2.jpg" alt="Conditioning image sample 2" loading="lazy">
+              <img src="media/viz_baselines/concat_2.jpg" alt="Concatenation baseline sample 2" loading="lazy">
+              <img src="media/viz_baselines/ours_2.jpg" alt="Our method sample 2" loading="lazy">
+            </div>
+          </div>
+        </div> -->
+
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- Audio Overview -->
+<section class="section" id="audio-overview">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered">
+      <div class="column is-full-width">
+        <h2 class="title is-3 has-text-centered">Listen to Paper Overview</h2>
+        <div class="audio-player-wrapper">
+          <audio id="paper-audio-player" controls preload="none">
+            <source src="media/ScenarioControl_podcast.m4a" type="audio/mp4">
+            Your browser does not support the audio element.
+          </audio>
+          <p class="audio-disclaimer">
+            <i class="fas fa-robot" aria-hidden="true"></i>
+            This audio overview is AI-generated and may contain inaccuracies. Refer to the paper for authoritative content.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- BibTeX -->
+<section class="section" id="citation">
+  <div class="container is-max-desktop content">
+    <h2 class="title">BibTeX</h2>
+    <pre><code>@article{scenariocontrol2026,
+  title   = {ScenarioControl: Vision-Language Controllable Vectorized
+             Latent Scenario Generation},
+  author  = {Gao, Lili and Xu, Yanbo and Koch, William and
+             Ruffino, Samuele and Rowe, Luke and Chalaki, Behdad and
+             Rivkin, Dmitriy and Ost, Julian and Girgis, Roger and
+             Bijelic, Mario and Heide, Felix},
+  journal = {arXiv preprint arXiv:2604.17147},
+  year    = {2026}
+}</code></pre>
+  </div>
+</section>
+
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content has-text-centered">
+          <p>
+            This website is maintained by <a href="https://light.princeton.edu/" target="_blank" rel="noopener noreferrer">princeton-computational-imaging</a>.
+            Website template adapted from the <a href="https://nerfies.github.io" target="_blank" rel="noopener noreferrer">Nerfies project page template</a>.
+            This <a href="https://github.com/princeton-computational-imaging/ScenarioControl/tree/website" target="_blank" rel="noopener noreferrer">website</a> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank">Creative Commons Attribution-ShareAlike 4.0 International License</a>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    new Plyr('#paper-audio-player', {
+      controls: ['play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'settings', 'download'],
+      settings: ['speed'],
+      speed: { selected: 1, options: [0.75, 1, 1.25, 1.5, 1.75, 2] },
+      invertTime: false
+    });
+  });
+</script>
+
+</body>
+</html>

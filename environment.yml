@@ -1,4 +1,4 @@
-name: scenario-dreamer
+name: ScenarioControl
 channels:
   - defaults
 dependencies:

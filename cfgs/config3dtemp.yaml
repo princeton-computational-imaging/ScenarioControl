@@ -1,0 +1,74 @@
+scratch_root: ${oc.env:SCRATCH_ROOT}  # scratch root directory, used for datasets and checkpoints
+dataset_root: ${oc.env:DATASET_ROOT}  # root directory for datasets
+project_root: ${oc.env:PROJECT_ROOT} # project root directory
+waymo_data_folder: ${dataset_root}/waymo_open_dataset_motion_v_1_1_0 # path to the Waymo Open Dataset
+waymo_train_folder: ${waymo_data_folder}/training # path to the training set of the Waymo Open Dataset
+waymo_val_folder: ${waymo_data_folder}/validation # path to the validation set of the Waymo Open Dataset
+waymo_test_folder: ${waymo_data_folder}/testing # path to the testing set of the Waymo Open Dataset
+nuplan_data_folder: /data_nuplan/nuplan/dataset/nuplan-v1.1 # path to the nuPlan Dataset
+
+# hydra:
+#   run:
+#     dir: ${project_root}/slurm_logs/${now:%Y.%m.%d}/${now:%H.%M.%S}/${hydra.job.override_dirname}
+hydra:
+  run:
+    dir: ${project_root}/slurm_logs/${now:%Y.%m.%d}/${now:%H.%M.%S}/${ldm.train.run_name}
+
+generate_waymo_dataset:
+  output_data_folder_train: ${dataset_root}/scenario_dreamer_waymo/train # output folder for training data
+  output_data_folder_val: ${dataset_root}/scenario_dreamer_waymo/val # output folder for validation data
+  output_data_folder_test: ${dataset_root}/scenario_dreamer_waymo/test # output folder for test data
+  num_workers: 20 # number of workers to use for generating the dataset
+  mode: train # or val or test
+  chunk_idx: -1 # If chunk_idx >= 0, indexes into the chunk_idx'th chunk of size chunk_size. If chunk_idx=-1, process all chunks in parallel processes
+  chunk_size: 50 # size of each chunk to process in parallel processes, if chunk_idx >= 0
+
+preprocess_waymo:
+  num_workers: 10 # number of workers to use for preprocessing the dataset
+  mode: train # or val or test
+  chunk_idx: -1 # If chunk_idx >= 0, indexes into the chunk_idx'th chunk of size chunk_size. If chunk_idx=-1, process all chunks in parallel processes
+  chunk_size: 50000 # size of each chunk to process in parallel processes, if chunk_idx >= 0
+
+preprocess_nuplan:
+  num_workers: 20 # number of workers to use for preprocessing the dataset
+  mode: train # or val or test
+  chunk_idx: -1 # If chunk_idx >= 0, indexes into the chunk_idx'th chunk of size chunk_size. If chunk_idx=-1, process all chunks in parallel processes
+  chunk_size: 75000 #0 # size of each chunk to process in parallel processes, if chunk_idx >= 0
+
+generate_nuplan_dataset_temp:
+  sledge_cache_root: /opt/dlami/nvme/sledge_workspace/caches # root dir containing the SLEDGE autoencoder caches
+  sledge_preprocessed_data_folder: autoencoder_cache_scenario_control # cache subfolder to read the temporal sledge_raw files from
+  image_root: ${nuplan_data_folder}/sensor_blobs # root dir for camera image blobs, used to check camera availability
+  cam_order: [CAM_F0, CAM_L0, CAM_R0, CAM_L1, CAM_R1, CAM_L2, CAM_R2, CAM_B0] # expected camera order
+  subsample_ratio: 4 # keep every Nth frame when subsampling a sequence
+  subsample: True # whether to subsample frames by subsample_ratio
+  filter_cam: True # whether to skip sequences with missing camera files / no CAM_F0
+
+model_name: autoencoder # or ldm
+dimension: 3d
+ckpt_path: null # path to the checkpoint to evaluate, only used for evaluation
+
+# hacky way to not have to manually change the dataset name in all config groups from command line
+# only dataset_name has to be configured from command line 
+# we have to define this as a group because Hydra resolves the defaults-list before it finishes building the root config
+# e.g. `python train.py dataset_name=waymo model_name=autoencoder`
+defaults:
+  - dataset_name: nuplan 
+  - dataset@ae.dataset:    ${dataset_name}_autoencoder
+  - train@ae.train:      ${dataset_name}_autoencoder
+  - eval@ae.eval:       ${dataset_name}_autoencoder
+  - model@ae.model:      ${dataset_name}_autoencoder
+  - datamodule@ae.datamodule: ${dataset_name}_autoencoder
+  - dataset@ldm.dataset:    ${dataset_name}_ldm
+  - train@ldm.train:      ${dataset_name}_ldm
+  - eval@ldm.eval:       ${dataset_name}_ldm
+  - model@ldm.model:      ${dataset_name}_ldm
+  - datamodule@ldm.datamodule: ${dataset_name}_ldm
+
+ldm:
+  model:
+    agent_latent_dim: 10
+ae:
+  model:
+    state_dim: 9
+    agent_latent_dim: 10

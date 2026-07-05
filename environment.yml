@@ -18,6 +18,7 @@ dependencies:
     - pytorch-lightning==2.4.0
     - torch_geometric==2.6.1
     - torchaudio==2.2.0
+    - torchvision==0.17.0
     - tensorflow==2.11.0
     - waymo-open-dataset-tf-2-11-0==1.6.1
     - networkx==3.4.2
@@ -26,3 +27,11 @@ dependencies:
     - Pillow==9.2.0
     - opencv-python==4.10.0.84
     - gdown==5.2.0
+    - efficientnet-pytorch==0.7.1
+    - ftfy==6.3.1
+    - lmdb==1.7.3
+    - slugify==0.0.1
+    - regex==2025.9.1
+    - transformers==4.56.1
+    - flash-attn==2.7.4.post1
+    - scikit-learn==1.2.1

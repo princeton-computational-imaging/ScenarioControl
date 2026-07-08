@@ -127,6 +127,11 @@ python eval.py \
   ae.eval.cache_latents.enable_caching=True \
   ae.eval.cache_latents.split_name=[train|val|test]
 ````
+
+
+### Generate Scenes with LDM with Conditioning
+Coming soon!
+
 ## Training <a name="training"></a>
 Coming soon!
 

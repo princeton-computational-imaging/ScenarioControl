@@ -25,11 +25,12 @@ We propose **ScenarioControl**, a vision-language controllable framework for lea
 1. [Setup](#setup)
 2. [Dataset Preparation](#dataset-preparation)
 3. [Pre-Trained Checkpoints](#pretrained-checkpoints)
-4. [Training](#training)
-5. [Evaluation](#evaluation)
-6. [Simulation](#simulation)
-7. [Citation](#citation)
-8. [Acknowledgements](#acknowledgements)
+4. [Inference](#inference)
+5. [Training](#training)
+6. [Evaluation](#evaluation)
+7. [Simulation](#simulation)
+8. [Citation](#citation)
+9. [Acknowledgements](#acknowledgements)
 
 ## Setup <a name="setup"></a>
 
@@ -109,11 +110,23 @@ Pre-trained checkpoints can be downloaded from [Google Drive](https://drive.goog
 
 #### Checkpoints
 
-   - Autoencoder: 
+   - Autoencoder: put under `$SCRATCH_ROOT/scenario_control_autoencoder3d_nuplan`
    - Unconditional Pretrained LDM: 
    - LDM for image-conditioning: coming soon!
    - LDM for prompt-conditioning: coming soon! 
 
+## Inference <a name="inference"></a>
+
+### Autoencoder Latent Caching:
+````bash
+# Cached latents are saved to: ae.eval.cache_latents.latent_dir
+python eval.py \
+  dataset_name=nuplan \
+  model_name=autoencoder \
+  ae.eval.run_name=scenario_control_autoencoder3d_nuplan \
+  ae.eval.cache_latents.enable_caching=True \
+  ae.eval.cache_latents.split_name=[train|val|test]
+````
 ## Training <a name="training"></a>
 Coming soon!
 

@@ -110,8 +110,8 @@ Pre-trained checkpoints can be downloaded from <a href="https://drive.google.com
 
 #### Checkpoints
 
-   - Autoencoder: put under `$SCRATCH_ROOT/scenario_control_autoencoder3d_nuplan`
-   - Unconditional Pretrained LDM: put under `$SCRATCH_ROOT/scenario_control_ldm_base_nuplan`
+   - Autoencoder: put under `$SCRATCH_ROOT/checkpoints/scenario_control_autoencoder3d_nuplan`
+   - Unconditional Pretrained LDM: put under `$SCRATCH_ROOT/checkpoints/scenario_control_ldm_base_nuplan`
    - LDM for image-conditioning: coming soon!
    - LDM for prompt-conditioning: coming soon! 
 

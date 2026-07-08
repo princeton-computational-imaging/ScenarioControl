@@ -32,7 +32,7 @@ class ScenarioDreamerLDM(pl.LightningModule):
         self.cfg = cfg 
         self.cfg_model = cfg.model
         self.cfg_dataset = self.cfg.dataset
-        self.diff_model = LDM(self.cfg)
+        self.diff_model = LDM(self.cfg, cfg_ae)
         self.autoencoder = ScenarioDreamerAutoEncoder.load_from_checkpoint(self.cfg_model.autoencoder_path, cfg=cfg_ae, map_location='cpu')
         
         self.init_prob_matrix = torch.load(self.cfg.eval.init_prob_matrix_path)

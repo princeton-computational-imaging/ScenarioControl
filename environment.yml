@@ -35,3 +35,4 @@ dependencies:
     - transformers==4.56.1
     - flash-attn==2.7.4.post1
     - scikit-learn==1.2.1
+    - pyquaternion==0.9.9

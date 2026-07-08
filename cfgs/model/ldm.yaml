@@ -11,8 +11,18 @@ agent_latent_dim: 8 # Dimension of autoencoder agent latents
 dropout: 0 # Dropout rate
 label_dropout: 0.1 # Dropout rate for labels for training (to enable classifier-free guidance at inference)
 num_l2l_blocks: 1 # Number of lane-to-lane blocks in each factorized DiT block
+num_scene_types: 3 # Number of scene-type classes conditioned on (combined with num_map_ids to index the scene-type embedding table)
 
 # sampling parameters
 n_diffusion_timesteps: 100 # Number of diffusion timesteps
 lane_sampling_temperature: 0.75 # Sampling temperature for lane latents in diffusion
 diffusion_clip: 5 # clip value for diffusion
+
+# image conditioning (DINO patch features + depth, injected via cross-attention)
+img_conditioning: false # whether to use image conditioning
+
+# text conditioning (injected via cross-attention)
+text_conditioning: false # whether to use text conditioning
+
+# whether to decode latents into full scene states during training (needed for the collision penalty regularizer)
+decode_in_training: false

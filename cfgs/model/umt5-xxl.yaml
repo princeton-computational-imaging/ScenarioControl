@@ -1,0 +1,4 @@
+text_len: 512
+dtype: "bfloat16"
+checkpoint_path: ${scratch_root}/checkpoints/text_encoders/umt5-xxl/models_t5_umt5-xxl-enc-bf16.pth
+tokenizer: "google/umt5-xxl"

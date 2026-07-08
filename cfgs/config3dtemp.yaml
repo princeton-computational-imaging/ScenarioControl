@@ -64,6 +64,7 @@ defaults:
   - eval@ldm.eval:       ${dataset_name}_ldm
   - model@ldm.model:      ${dataset_name}_ldm
   - datamodule@ldm.datamodule: ${dataset_name}_ldm
+  - model@ldm.text_encoder: umt5-xxl
 
 ldm:
   model:

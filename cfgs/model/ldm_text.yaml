@@ -1,0 +1,6 @@
+defaults:
+- ldm
+
+# text conditioning
+text_conditioning: true
+text_feat_dim: 4096 # dimension of text features

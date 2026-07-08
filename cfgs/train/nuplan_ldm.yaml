@@ -17,3 +17,7 @@ viz_dir: ${project_root}/viz_val_${ldm.train.run_name} # from base.yaml
 # this is only computed once at the start of training
 num_batches_compute_stats: 250 # number of batches to compute mean/std of latents for normalization
 batch_size_compute_stats: 1024 # batch size for computing mean/std of latents
+
+# collision penalty regularizer (requires ldm.model.decode_in_training=true)
+collision_weight: 0.0 # weight of the collision penalty loss term, disabled when 0.0
+collision_filter_for_vehicles: false # if true, only compute the collision penalty over vehicle agents

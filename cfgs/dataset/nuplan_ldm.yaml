@@ -8,3 +8,6 @@ agent_latents_mean: null # mean of agent latents, to be computed from training d
 agent_latents_std: null # std of agent latents, to be computed from training data
 lane_latents_mean: null # mean of lane latents, to be computed from training data
 lane_latents_std: null # std of lane latents, to be computed from training data
+
+# text conditioning
+use_cached_text_embeds: false # if true, read precomputed text embeddings from data['text_embeds'] instead of encoding data['text'] on the fly

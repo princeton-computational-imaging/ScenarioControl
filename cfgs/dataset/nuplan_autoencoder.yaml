@@ -1,11 +1,11 @@
 defaults:
 - nuplan_base
 
-sledge_split_path: ${dataset_root}/scenario_dreamer_nuplan_temp_8cam_4xsubsampled/
+sledge_split_path: ${dataset_root}/scenario_control_nuplan_temp_8cam_4xsubsampled/
 sledge_raw_dataset_path: ${ae.dataset.sledge_split_path}/sledge_raw # we use the same processed nuplan dataset as SLEDGE
 map_id_dataset_path: ${ae.dataset.sledge_split_path}/map_id # we use the same processed nuplan dataset as SLEDGE
 preprocess: True # get data from preprocessed files if True, otherwise write preprocessed data to disk (you can only train with preprocess=True).
-preprocess_dir: ${dataset_root}/scenario_dreamer_ae_preprocess_nuplan_3dtemp # directory to save preprocessed data
+preprocess_dir: ${dataset_root}/scenario_control_ae_preprocess_nuplan_3dtemp # directory to save preprocessed data
 remove_left_right_connections: True # we only process the pre/succ connections. This cannot be toggled.
 nuplan_data_root: ${nuplan_data_folder}
 load_images: False

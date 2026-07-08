@@ -2,7 +2,7 @@
 seed: 0 # training seed for reproducibility
 save_dir: ${scratch_root}/checkpoints/ # directory to save checkpoints/log files
 run_name: null # name of saved directory for run
-wandb_project: scenario-dreamer # wandb project
+wandb_project: scenario-control # wandb project
 wandb_entity: null # wandb entity
 track: False # track to wandb
 accelerator: auto # pytorch lightning accelerator

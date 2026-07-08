@@ -54,7 +54,7 @@ source $(pwd)/scripts/define_env_variables.sh
 ```
 # create conda environment
 conda env create -f environment.yml
-conda activate scenario-dreamer
+conda activate ScenarioControl
 
 # login to wandb for experiment logging
 export WANDB_API_KEY=<your_api_key>

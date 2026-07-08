@@ -1,7 +1,7 @@
 defaults:
 - base
 
-run_name: scenario_dreamer_autoencoder3d_nuplan # from base.yaml
+run_name: scenario_control_autoencoder3d_nuplan # from base.yaml
 max_steps: 357450 # from base.yaml
 warmup_steps: 1000 # from base.yaml
 lr_schedule: linear # from base.yaml

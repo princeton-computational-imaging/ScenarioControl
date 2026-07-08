@@ -1,7 +1,7 @@
 defaults:
 - base
 
-run_name: scenario_dreamer_ldm_base_nuplan # from base.yaml
+run_name: scenario_control_ldm_base_nuplan # from base.yaml
 lr_schedule: constant # from base.yaml
 save_top_k: 0 # only save latest checkpoint
 max_steps: 165000 # from base.yaml

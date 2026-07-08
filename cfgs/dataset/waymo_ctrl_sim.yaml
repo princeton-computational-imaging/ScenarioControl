@@ -1,6 +1,6 @@
 preprocess: True # get data from preprocessed files if True, otherwise write preprocessed data to disk (you can only train with preprocess=True).
-preprocess_dir: ${dataset_root}/scenario_dreamer_ctrl_sim_preprocess # directory to save preprocessed data
-dataset_path: ${dataset_root}/scenario_dreamer_waymo # path to extracted waymo dataset that will be loaded and preprocessed
+preprocess_dir: ${dataset_root}/scenario_control_ctrl_sim_preprocess # directory to save preprocessed data
+dataset_path: ${dataset_root}/scenario_control_waymo # path to extracted waymo dataset that will be loaded and preprocessed
 train_context_length: 32 # CtRL-Sim context length (in timesteps)
 max_num_lanes: 100 # maximum number of lanes in context
 max_num_agents: 24 # maximum number of modeled agents

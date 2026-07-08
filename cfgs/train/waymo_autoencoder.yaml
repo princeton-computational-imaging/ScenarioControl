@@ -1,7 +1,7 @@
 defaults:
 - base
 
-run_name: scenario_dreamer_autoencoder_waymo # from base.yaml
+run_name: scenario_control_autoencoder_waymo # from base.yaml
 max_steps: 350000 # from base.yaml
 warmup_steps: 1000 # from base.yaml
 lr_schedule: linear # from base.yaml

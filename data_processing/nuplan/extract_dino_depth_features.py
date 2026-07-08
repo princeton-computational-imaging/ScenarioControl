@@ -486,7 +486,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--pkl-root", type=str, required=True,
                         help="Directory of per-frame nuPlan camera-info pkls, e.g. "
-                             "$DATASET_ROOT/scenario_dreamer_ae_preprocess_nuplan_3dtemp")
+                             "$DATASET_ROOT/scenario_control_ae_preprocess_nuplan_3dtemp")
     parser.add_argument("--split", type=str, default="all", choices=["train", "val", "test", "all"])
     parser.add_argument("--batch-size", type=int, default=8, help="Keep batch_size=1 for simplicity (variable N per sample).")
     parser.add_argument("--img-root", type=str, required=True,

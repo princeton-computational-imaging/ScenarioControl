@@ -15,9 +15,9 @@ hydra:
     dir: ${project_root}/slurm_logs/${now:%Y.%m.%d}/${now:%H.%M.%S}/${ldm.train.run_name}
 
 generate_waymo_dataset:
-  output_data_folder_train: ${dataset_root}/scenario_dreamer_waymo/train # output folder for training data
-  output_data_folder_val: ${dataset_root}/scenario_dreamer_waymo/val # output folder for validation data
-  output_data_folder_test: ${dataset_root}/scenario_dreamer_waymo/test # output folder for test data
+  output_data_folder_train: ${dataset_root}/scenario_control_waymo/train # output folder for training data
+  output_data_folder_val: ${dataset_root}/scenario_control_waymo/val # output folder for validation data
+  output_data_folder_test: ${dataset_root}/scenario_control_waymo/test # output folder for test data
   num_workers: 20 # number of workers to use for generating the dataset
   mode: train # or val or test
   chunk_idx: -1 # If chunk_idx >= 0, indexes into the chunk_idx'th chunk of size chunk_size. If chunk_idx=-1, process all chunks in parallel processes

@@ -46,7 +46,7 @@ def main(cfg):
     subsample = gcfg.subsample
     filter_cam = gcfg.filter_cam
     mode = f"{len(cam_order)}cam_{subsample_ratio}xsubsampled"  # "nofilter", "8cam"
-    out_data_folder = f"scenario_dreamer_nuplan_temp_{mode}"
+    out_data_folder = f"scenario_control_nuplan_temp_{mode}"
 
     print("Creating train/val/test splits for temporal SLEDGE autoencoder cache files...")
     autoencoder_cache_path = os.path.join(gcfg.sledge_cache_root, gcfg.sledge_preprocessed_data_folder)

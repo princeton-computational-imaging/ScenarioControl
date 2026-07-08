@@ -105,11 +105,14 @@ Coming soon
 
 ## Pre-Trained Checkpoints <a name="pretrained-checkpoints"></a>
 
-Coming soon!
+Pre-trained checkpoints can be downloaded from [Google Drive](https://drive.google.com/drive/folders/1G9jUA_wgF2Vo40I5HckO1yxUjA_0kUEJ?usp=sharing). Place the `checkpoints` directory into your scratch (`$SCRATCH_ROOT`) directory. 
 
 #### Checkpoints
 
-Coming soon!
+   - Autoencoder: 
+   - Unconditional Pretrained LDM: 
+   - LDM for image-conditioning: coming soon!
+   - LDM for prompt-conditioning: coming soon! 
 
 ## Training <a name="training"></a>
 Coming soon!

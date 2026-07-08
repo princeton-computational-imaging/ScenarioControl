@@ -106,12 +106,12 @@ Coming soon
 
 ## Pre-Trained Checkpoints <a name="pretrained-checkpoints"></a>
 
-Pre-trained checkpoints can be downloaded from [Google Drive](https://drive.google.com/drive/folders/1G9jUA_wgF2Vo40I5HckO1yxUjA_0kUEJ?usp=sharing). Place the `checkpoints` directory into your scratch (`$SCRATCH_ROOT`) directory. 
+Pre-trained checkpoints can be downloaded from <a href="https://drive.google.com/drive/folders/1V2GC7eU7CnfaOeebHP-G5S0rKJBbJ0Kp?usp=sharing" target="_blank" rel="noopener noreferrer">Google Drive</a>. Place the `checkpoints` directory into your scratch (`$SCRATCH_ROOT`) directory. 
 
 #### Checkpoints
 
    - Autoencoder: put under `$SCRATCH_ROOT/scenario_control_autoencoder3d_nuplan`
-   - Unconditional Pretrained LDM: 
+   - Unconditional Pretrained LDM: put under `$SCRATCH_ROOT/scenario_control_ldm_base_nuplan`
    - LDM for image-conditioning: coming soon!
    - LDM for prompt-conditioning: coming soon! 
 

@@ -4,7 +4,7 @@ import glob
 from tqdm import tqdm
 from utils.train_helpers import create_lambda_lr_cosine, create_lambda_lr_linear, create_lambda_lr_constant
 from nn_modules.ldm import LDM
-from models.scenario_dreamer_autoencoder import ScenarioDreamerAutoEncoder
+from models.scenario_control_autoencoder import ScenarioControlAutoEncoder
 from utils.data_container import ScenarioDreamerData
 from torch_geometric.loader import DataLoader
 from torch_geometric.data import Batch
@@ -24,16 +24,16 @@ from pytorch_lightning.utilities import grad_norm
 from torch_ema import ExponentialMovingAverage
 torch.set_printoptions(sci_mode=False)
 
-class ScenarioDreamerLDM(pl.LightningModule):
+class ScenarioControlLDM(pl.LightningModule):
     def __init__(self, cfg, cfg_ae):
-        super(ScenarioDreamerLDM, self).__init__()
+        super(ScenarioControlLDM, self).__init__()
 
         self.save_hyperparameters()
         self.cfg = cfg 
         self.cfg_model = cfg.model
         self.cfg_dataset = self.cfg.dataset
         self.diff_model = LDM(self.cfg, cfg_ae)
-        self.autoencoder = ScenarioDreamerAutoEncoder.load_from_checkpoint(self.cfg_model.autoencoder_path, cfg=cfg_ae, map_location='cpu')
+        self.autoencoder = ScenarioControlAutoEncoder.load_from_checkpoint(self.cfg_model.autoencoder_path, cfg=cfg_ae, map_location='cpu')
         
         self.init_prob_matrix = torch.load(self.cfg.eval.init_prob_matrix_path)
         self.ema = ExponentialMovingAverage(self.diff_model.parameters(), decay=self.cfg.train.ema_decay)

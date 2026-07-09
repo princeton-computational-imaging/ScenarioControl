@@ -29,3 +29,7 @@ min_lane_x: -32
 max_lane_x: 32
 min_lane_y: -32
 max_lane_y: 32
+# TODO(@SAMU): compute correct min and max z values, min max height values
+min_height: 0.2
+max_height: 3.5
+fov_z: 5

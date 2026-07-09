@@ -12,7 +12,7 @@ from nn_modules.text_encoders.umt5 import T5EncoderModel
 from cfgs.config import BEFORE_PARTITION, UNIFIED_FORMAT_INDICES, NUPLAN_VEHICLE
 from utils.torch_helpers import get_torch_dtype
 from utils.data_helpers import diff_unnorm_scene_by_mode, unnormalize_latents
-from models.scenario_dreamer_autoencoder import ScenarioDreamerAutoEncoder
+from models.scenario_control_autoencoder import ScenarioControlAutoEncoder
 
 class LDM(nn.Module):
     def __init__(self, cfg, cfg_ae):
@@ -24,7 +24,7 @@ class LDM(nn.Module):
         self.model = DiT(cfg)
 
         if self.cfg_model.decode_in_training:
-            self.autoencoder = ScenarioDreamerAutoEncoder.load_from_checkpoint(self.cfg_model.autoencoder_path, cfg=cfg_ae, map_location='cpu')
+            self.autoencoder = ScenarioControlAutoEncoder.load_from_checkpoint(self.cfg_model.autoencoder_path, cfg=cfg_ae, map_location='cpu')
             # Freeze autoencoder weights
             for p in self.autoencoder.parameters():
                 p.requires_grad = False

@@ -122,8 +122,9 @@ Pre-trained checkpoints can be downloaded from <a href="https://drive.google.com
 # Cached latents are saved to: ae.eval.cache_latents.latent_dir
 python eval.py \
   dataset_name=nuplan \
-  model_name=autoencoder \
+  model_name=autoencoder3dtemp \
   ae.eval.run_name=scenario_control_autoencoder3d_nuplan \
+  ae.dataset.load_images=True \
   ae.eval.cache_latents.enable_caching=True \
   ae.eval.cache_latents.split_name=[train|val|test]
 ````

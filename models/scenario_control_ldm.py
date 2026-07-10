@@ -2,7 +2,7 @@ import os
 import pickle
 import glob
 from tqdm import tqdm
-from utils.train_helpers import create_lambda_lr_cosine, create_lambda_lr_linear, create_lambda_lr_constant
+from utils.train_helpers import create_lambda_lr_cosine, create_lambda_lr_linear, create_lambda_lr_constant, normalize_key
 from nn_modules.ldm import LDM
 from models.scenario_control_autoencoder import ScenarioControlAutoEncoder
 from utils.data_container import ScenarioDreamerData
@@ -42,6 +42,13 @@ class ScenarioControlLDM(pl.LightningModule):
     def on_train_start(self):
         """ Move ema weights to same device as model"""
         self.ema.to(self.device)
+
+
+    def on_train_epoch_start(self):
+        """ Re-sample the unconditional-dataset mixin (ldm.dataset.uncond_ratio/drop_cond_ratio) for the new epoch, if configured."""
+        train_dataset = getattr(self.trainer.datamodule, 'train_dataset', None)
+        if train_dataset is not None and hasattr(train_dataset, 'refresh_uncond_files'):
+            train_dataset.refresh_uncond_files()
 
 
     def optimizer_step(self, *args, **kwargs):
@@ -115,7 +122,33 @@ class ScenarioControlLDM(pl.LightningModule):
                 self.logger.experiment.log(images_to_log)
 
 
-    def forward(self, 
+    def test_step(self, data, batch_idx):
+        """ Test step for image-conditioned generation, seeded from real reference scenes
+            (see datasets.nuplan.dataset_ldm_nuplan_init.NuplanDatasetLDMInit). Drives the diffusion
+            sampler directly on the batch rather than going through generate()/_initialize_pyg_dset,
+            since the conditioning data (dino_feats/depth_map/structure) already comes from the dataloader."""
+        with self.ema.average_parameters():
+            data, _ = self.forward(
+                data,
+                self.cfg.eval.mode,
+                batch_idx,
+                viz_dir=self.cfg.eval.viz_dir,
+                visualize=self.cfg.eval.visualize,
+                save_wandb=False,
+            )
+            convert_batch_to_scenarios(
+                data,
+                batch_size=data.batch_size,
+                batch_idx=batch_idx,
+                cache_dir=os.path.join(self.cfg.eval.save_dir, self.cfg.eval.run_name, f'{self.cfg.eval.mode}_samples'),
+                cache_samples=self.cfg.eval.cache_samples,
+                cache_lane_types=self.cfg.dataset_name == 'nuplan',
+                mode=self.cfg.eval.mode,
+                raw_file_names=data.get('raw_file_name', None),
+            )
+
+
+    def forward(self,
                 data,
                 mode, 
                 batch_idx, 
@@ -253,14 +286,14 @@ class ScenarioControlLDM(pl.LightningModule):
 
                 # we use this function in a hacky way to reorder the latents and conditional lane indices
                 # we don't need the updated edge indices here as the lane-to-lane graph is fully connected
-                agent_latents_i, _, lane_latents_i, cond_lane_ids_i, _, _, _ = reorder_indices(
-                    agent_latents_i.cpu().numpy(), 
-                    agent_latents_i.cpu().numpy(), 
-                    lane_latents_i.cpu().numpy(), 
-                    cond_lane_ids_i.cpu().numpy(), 
-                    get_edge_index_complete_graph(len(lane_latents_i)).numpy(), 
-                    agent_states_i.cpu().numpy(), 
-                    lane_states_i.cpu().numpy(), 
+                agent_latents_i, _, lane_latents_i, cond_lane_ids_i, _, _, _, _, _, _, _ = reorder_indices(
+                    agent_latents_i.cpu().numpy(),
+                    agent_latents_i.cpu().numpy(),
+                    lane_latents_i.cpu().numpy(),
+                    cond_lane_ids_i.cpu().numpy(),
+                    get_edge_index_complete_graph(len(lane_latents_i)).numpy(),
+                    agent_states_i.cpu().numpy(),
+                    lane_states_i.cpu().numpy(),
                     lg_type=0, # we don't care about partition masks here
                     dataset=self.cfg.dataset_name)
                 agent_latents_i = from_numpy(agent_latents_i)
@@ -397,14 +430,14 @@ class ScenarioControlLDM(pl.LightningModule):
                 num_agents = agent_mu.shape[0]
 
                 # apply recursive ordering
-                agent_mu, agent_log_var, lane_mu, lane_log_var, edge_index_lane_to_lane, _, _ = reorder_indices(
-                    agent_mu, 
-                    agent_log_var, 
-                    lane_mu, 
-                    lane_log_var, 
-                    edge_index_lane_to_lane, 
-                    agent_states, 
-                    road_points, 
+                agent_mu, agent_log_var, lane_mu, lane_log_var, edge_index_lane_to_lane, _, _, _, _, _, _ = reorder_indices(
+                    agent_mu,
+                    agent_log_var,
+                    lane_mu,
+                    lane_log_var,
+                    edge_index_lane_to_lane,
+                    agent_states,
+                    road_points,
                     scene_type,
                     dataset=self.cfg.dataset_name)
                 edge_index_lane_to_lane = torch.from_numpy(edge_index_lane_to_lane)
@@ -527,6 +560,28 @@ class ScenarioControlLDM(pl.LightningModule):
     def on_load_checkpoint(self, checkpoint):
         """ Called when loading a checkpoint. Loads the EMA state dict."""
         self.ema.load_state_dict(checkpoint['ema_state_dict'])
+
+
+    def apply_freeze_policy_from_missing(self, missing_keys, mismatch_keys=None):
+        """ Used when finetuning (cfg.train.finetune=True, cfg.train.freeze_pretrained=True): freeze every
+            parameter that successfully loaded from the pretrained checkpoint, leave newly-added parameters
+            (missing or shape-mismatched in that checkpoint) trainable. `missing_keys`/`mismatch_keys` come
+            from the strict=False load_state_dict() result in train.py, called on this module directly, so
+            they're prefixed with "diff_model." -- must compare against self.named_parameters(), not
+            self.diff_model.named_parameters(), or nothing will ever match and everything gets frozen."""
+        new_keys = {normalize_key(k) for k in (set(missing_keys) | set(mismatch_keys or ()))}
+
+        if hasattr(self.diff_model, 'text_encoder'):
+            for p in self.diff_model.text_encoder.parameters():
+                p.requires_grad = False
+
+        kept = total = 0
+        for name, p in self.named_parameters():
+            total += 1
+            is_new = normalize_key(name) in new_keys
+            p.requires_grad = is_new
+            kept += int(is_new)
+        print(f"[freeze_pretrained] trainable(new)={kept} / total={total} parameters")
 
 
      ### Taken largely from QCNet repository: https://github.com/ZikangZhou/QCNet

@@ -214,8 +214,17 @@ def get_causal_mask(cfg, num_timesteps, num_types):
     for index_i in range(len(mask)):
         timestep_idx = index_i // (num_types * num_agents)
         for index_j in range(len(mask)):
-            if (index_j < (timestep_idx + 1) * (num_agents*num_types) 
+            if (index_j < (timestep_idx + 1) * (num_agents*num_types)
                 and index_j % num_types == state_index):
                 mask[index_i, index_j] = 0.
+
+
+def normalize_key(name: str) -> str:
+    """Strip common wrapper prefixes (DDP/torch.compile) so checkpoint state_dict keys and
+    named_parameters() keys compare equal regardless of how the model was wrapped when saved."""
+    for prefix in ('module.', '_orig_mod.'):
+        while name.startswith(prefix):
+            name = name[len(prefix):]
+    return name
 
     return mask

@@ -15,12 +15,14 @@ class NuplanDataModuleLDM(pl.LightningDataModule):
                  num_workers,
                  pin_memory,
                  persistent_workers,
-                 dataset_cfg):
+                 dataset_cfg,
+                 test_batch_size=None):
         super(NuplanDataModuleLDM, self).__init__()
         self.train_batch_size = train_batch_size
-        self.val_batch_size = val_batch_size 
+        self.val_batch_size = val_batch_size
+        self.test_batch_size = test_batch_size
         self.num_workers = num_workers
-        self.pin_memory = pin_memory 
+        self.pin_memory = pin_memory
         self.persistent_workers = persistent_workers
         self.cfg_dataset = dataset_cfg
         

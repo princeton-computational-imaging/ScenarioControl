@@ -20,6 +20,10 @@ diffusion_clip: 5 # clip value for diffusion
 
 # image conditioning (DINO patch features + depth, injected via cross-attention)
 img_conditioning: false # whether to use image conditioning
+dino_feat_channels: 384 # channel dim of the input DINO patch features
+dino_patch_size: 16 # DINO patch size in pixels, used to resize the depth map to match the DINO grid
+dino_dim_h: 14 # DINO patch grid height
+dino_dim_w: 14 # DINO patch grid width
 
 # text conditioning (injected via cross-attention)
 text_conditioning: false # whether to use text conditioning

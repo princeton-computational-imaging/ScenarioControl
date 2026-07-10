@@ -35,16 +35,50 @@ class NuplanDatasetLDM(Dataset):
         """
         super(NuplanDatasetLDM, self).__init__()
         self.cfg = cfg
-        self.split_name = split_name 
+        self.split_name = split_name
         self.dataset_dir = os.path.join(self.cfg.dataset_path, f"{self.split_name}")
         if not os.path.exists(self.dataset_dir):
             os.makedirs(self.dataset_dir, exist_ok=True)
 
-        self.files = sorted(glob.glob(self.dataset_dir + "/*.pkl"))
+        # if set, only load cached scenes whose filename ends in one of these scene-type digits (e.g. '2' or '12')
+        self.load_scene_type = self.cfg.get('load_scene_type', None)
+        scene_type_glob = f"/*_[{self.load_scene_type}].pkl" if self.load_scene_type is not None else "/*.pkl"
+        self.files = sorted(glob.glob(self.dataset_dir + scene_type_glob))
+        self.files_base = self.files.copy()
+
+        # every sample is conditioned by default; is_conditioned_flags tracks which directory each file
+        # was drawn from (main dataset_dir vs. uncond_dataset_path), drop_condition_flags additionally
+        # drops image conditioning (but not the underlying scene) on some already-conditioned samples
+        self.is_conditioned_flags = [True] * len(self.files)
+        self.is_conditioned_base = self.is_conditioned_flags.copy()
+        self.drop_condition_flags = None
+
+        self.load_single_img_cond = self.cfg.get('load_single_img_cond', False)
+        self.img_latents_dir = os.path.join(self.cfg.get('img_latents_dir', ''), f"{self.split_name}")
+        self.uncond_dataset_path = self.cfg.get('uncond_dataset_path', None)
+        if self.load_single_img_cond and self.split_name == 'train' and self.uncond_dataset_path:
+            self.uncond_dataset_dir = os.path.join(self.uncond_dataset_path, f"{self.split_name}")
+            self.all_uncond_files = sorted(glob.glob(self.uncond_dataset_dir + scene_type_glob))
+            self.num_to_add = int(self.cfg.get('uncond_ratio', 0.0) * len(self.files))
+            self.refresh_uncond_files()
+
+        self.dset_len = len(self.files)
+
+
+    def refresh_uncond_files(self):
+        """Re-sample the unconditional-dataset mixin and condition-dropout mask for a new training epoch."""
+        if not hasattr(self, 'all_uncond_files'):
+            return
+        num_to_add = min(self.num_to_add, len(self.all_uncond_files))
+        sampled_uncond_files = random.sample(self.all_uncond_files, num_to_add)
+        self.files = self.files_base + sampled_uncond_files
+        self.is_conditioned_flags = self.is_conditioned_base + [False] * len(sampled_uncond_files)
+        drop_cond_ratio = self.cfg.get('drop_cond_ratio', 0.0)
+        self.drop_condition_flags = np.random.rand(len(self.files)) > drop_cond_ratio
         self.dset_len = len(self.files)
 
     
-    def get_data(self, data, idx):
+    def get_data(self, data, idx, is_conditioned=True, raw_file_name=None):
         """Return a sample for ldm training"""
         idx = data['idx']
         agent_states = data['agent_states']
@@ -62,23 +96,22 @@ class NuplanDatasetLDM(Dataset):
         num_agents = agent_mu.shape[0]
 
         # apply recursive ordering
-        agent_mu, agent_log_var, lane_mu, lane_log_var, edge_index_lane_to_lane, agent_partition_mask, lane_partition_mask = reorder_indices(
-            agent_mu, 
-            agent_log_var, 
-            lane_mu, 
-            lane_log_var, 
-            edge_index_lane_to_lane, 
-            agent_states, 
-            road_points, 
+        agent_mu, agent_log_var, lane_mu, lane_log_var, edge_index_lane_to_lane, agent_partition_mask, lane_partition_mask, agent_fov_mask, lane_fov_mask, _, _ = reorder_indices(
+            agent_mu,
+            agent_log_var,
+            lane_mu,
+            lane_log_var,
+            edge_index_lane_to_lane,
+            agent_states,
+            road_points,
             scene_type,
             dataset='nuplan')
         edge_index_lane_to_lane = torch.from_numpy(edge_index_lane_to_lane)
 
         # sample for ldm training
-        d = dict()
         d = ScenarioDreamerData()
         d['idx'] = idx
-        d['num_lanes'] = num_lanes 
+        d['num_lanes'] = num_lanes
         d['num_agents'] = num_agents
         d['lg_type'] = scene_type
         d['map_id'] = from_numpy(map_id)
@@ -86,10 +119,11 @@ class NuplanDatasetLDM(Dataset):
         d['lane'].x = from_numpy(lane_mu)
         d['agent'].partition_mask = from_numpy(agent_partition_mask)
         d['lane'].partition_mask = from_numpy(lane_partition_mask)
+        d['agent'].fov_mask = from_numpy(agent_fov_mask)
         d['agent'].log_var = from_numpy(agent_log_var)
         d['lane'].log_var = from_numpy(lane_log_var)
         d['agent'].latents, d['lane'].latents = sample_latents(
-            d, 
+            d,
             self.cfg.agent_latents_mean,
             self.cfg.agent_latents_std,
             self.cfg.lane_latents_mean,
@@ -100,17 +134,49 @@ class NuplanDatasetLDM(Dataset):
         d['agent', 'to', 'agent'].edge_index = from_numpy(edge_index_agent_to_agent)
         d['lane', 'to', 'agent'].edge_index = from_numpy(edge_index_lane_to_agent)
 
+        if self.load_single_img_cond:
+            if is_conditioned:
+                # the DINO+depth features are extracted once per front-camera frame (scene-type suffix "_0"),
+                # so scene-type 1/2 variants of the same frame share the same cached features
+                img_latents_name = f'{raw_file_name}_dino_depths.npz'
+                img_latents_name = img_latents_name.replace("_1_dino_depths.npz", "_0_dino_depths.npz")
+                img_latents_name = img_latents_name.replace("_2_dino_depths.npz", "_0_dino_depths.npz")
+                img_latents_path = os.path.join(self.img_latents_dir, img_latents_name)
+
+                img_data = np.load(img_latents_path, allow_pickle=False)
+                dino_feats = torch.from_numpy(img_data["dino_feats"])
+                # raw "depths" is (1, H, W) -- the leading dim becomes the batch dim once PyG concatenates
+                # samples along dim 0, so the channel dim (size 1) must be inserted at position 1, not 0
+                depth_map = torch.nan_to_num(torch.from_numpy(img_data["depths"]).unsqueeze(1))
+
+                # per-sample local min-max normalization
+                depth_min = torch.amin(depth_map, dim=(-2, -1), keepdim=True)
+                depth_max = torch.amax(depth_map, dim=(-2, -1), keepdim=True)
+                depth_map = (depth_map - depth_min) / (depth_max - depth_min + 1e-8)
+
+                d['dino_feats'] = dino_feats
+                d['depth_map'] = depth_map
+            else:
+                d['dino_feats'] = torch.zeros(torch.Size(self.cfg.dino_feats_shape))
+                d['depth_map'] = torch.zeros(torch.Size(self.cfg.depth_map_shape))
+
         return d
 
-    
+
     def get(self, idx: int):
+        is_conditioned = self.is_conditioned_flags[idx]
         raw_file_name = os.path.splitext(os.path.basename(self.files[idx]))[0]
-        raw_path = os.path.join(self.dataset_dir, f'{raw_file_name}.pkl')
+        raw_path = os.path.join(self.dataset_dir if is_conditioned else self.uncond_dataset_dir, f'{raw_file_name}.pkl')
         with open(raw_path, 'rb') as f:
             data = pickle.load(f)
-        
-        d = self.get_data(data, idx)
-        
+
+        # drop_condition_flags only ever downgrades an already-conditioned sample to unconditioned
+        # (for image-loading purposes); it never affects which underlying scene/geometry is loaded
+        if is_conditioned and self.drop_condition_flags is not None:
+            is_conditioned = bool(self.drop_condition_flags[idx])
+
+        d = self.get_data(data, idx, is_conditioned=is_conditioned, raw_file_name=raw_file_name)
+
         return d
 
     

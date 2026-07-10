@@ -21,3 +21,11 @@ batch_size_compute_stats: 1024 # batch size for computing mean/std of latents
 # collision penalty regularizer (requires ldm.model.decode_in_training=true)
 collision_weight: 0.0 # weight of the collision penalty loss term, disabled when 0.0
 collision_filter_for_vehicles: false # if true, only compute the collision penalty over vehicle agents
+
+# FOV-based loss dropout: agents outside the conditioning camera's FOV are kept in the loss w.p. (1 - fov_dropout_prob)
+fov_dropout_prob: 0.0 # disabled when 0.0; requires data['agent'].fov_mask (see ldm.dataset.load_single_img_cond)
+
+# finetuning from a pretrained checkpoint
+finetune: false # if true, load pretrained_dir/last.ckpt with strict=False instead of starting from scratch
+pretrained_dir: null # directory containing the pretrained checkpoint to finetune from
+freeze_pretrained: false # if true (and finetune=true), freeze all weights that loaded from the pretrained checkpoint and only train newly-added ones

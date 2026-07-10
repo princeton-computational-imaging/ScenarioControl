@@ -134,7 +134,32 @@ python eval.py \
 Coming soon!
 
 ## Training <a name="training"></a>
-Coming soon!
+
+### Finetune LDM with Image Conditioning
+Finetunes a pretrained unconditional LDM checkpoint to add single-image conditioning (DINO patch features + depth map, see [Dataset Preparation](#dataset-preparation)). `ldm.train.freeze_pretrained=True` freezes every weight that loaded from `ldm.train.pretrained_dir`, training only the newly-added image-conditioning layers.
+````bash
+CUDA_VISIBLE_DEVICES=0,1,2,3 python train.py \
+  dataset_name=nuplan \
+  model_name=ldm_cond \
+  ldm.model.autoencoder_run_name=scenario_control_autoencoder3d_nuplan \
+  ldm.dataset.load_single_img_cond=True \
+  ldm.dataset.load_scene_type='2' \
+  ldm.model.img_conditioning=True \
+  ldm.model.decode_in_training=True \
+  ldm.train.run_name=scenario_control_ldm_img_cond_nuplan \
+  ldm.train.devices=4 \
+  ldm.train.lr=5e-5 \
+  ldm.train.track=True \
+  ldm.train.finetune=True \
+  ldm.train.pretrained_dir=$SCRATCH_ROOT/checkpoints/scenario_control_ldm_base_nuplan \
+  ldm.train.freeze_pretrained=True \
+  ldm.train.collision_weight=0.001 \
+  ldm.train.save_top_k=-1 \
+  ldm.train.check_val_every_n_epoch=2 \
+  ldm.train.num_samples_to_visualize=1 \
+  ldm.datamodule.train_batch_size=64 \
+  ldm.datamodule.val_batch_size=64
+````
 
 ## Evaluation <a name="evaluation"></a>
 Coming soon!

@@ -61,14 +61,14 @@ class WaymoDatasetLDM(Dataset):
         num_agents = agent_mu.shape[0]
 
         # apply recursive ordering
-        agent_mu, agent_log_var, lane_mu, lane_log_var, edge_index_lane_to_lane, agent_partition_mask, lane_partition_mask = reorder_indices(
-            agent_mu, 
-            agent_log_var, 
-            lane_mu, 
-            lane_log_var, 
-            edge_index_lane_to_lane, 
-            agent_states, 
-            road_points, 
+        agent_mu, agent_log_var, lane_mu, lane_log_var, edge_index_lane_to_lane, agent_partition_mask, lane_partition_mask, _, _, _, _ = reorder_indices(
+            agent_mu,
+            agent_log_var,
+            lane_mu,
+            lane_log_var,
+            edge_index_lane_to_lane,
+            agent_states,
+            road_points,
             scene_type,
             dataset='waymo')
         edge_index_lane_to_lane = torch.from_numpy(edge_index_lane_to_lane)

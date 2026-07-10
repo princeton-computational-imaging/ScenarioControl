@@ -448,7 +448,16 @@ class LDM(nn.Module):
         agent_mask = data['agent'].partition_mask == BEFORE_PARTITION
         agent_noise[agent_mask] = 0.
 
-        agent_loss = self.agent_loss_fn(agent_noise_pred, agent_noise, data['agent'].batch)
+        p_drop = self.cfg.train.get('fov_dropout_prob', 0.0)
+        if p_drop == 0.0:
+            agent_loss = self.agent_loss_fn(agent_noise_pred, agent_noise, data['agent'].batch)
+        else:
+            # agents inside the conditioning camera's FOV always contribute to the loss;
+            # agents outside it are kept with probability (1 - p_drop), resampled every forward call
+            fov_mask = data['agent'].fov_mask
+            rand_keep = torch.rand_like(fov_mask.float()) > p_drop
+            agent_loss_mask = torch.where(fov_mask.bool(), torch.ones_like(rand_keep), rand_keep).float()
+            agent_loss = self.agent_loss_fn(agent_noise_pred, agent_noise, data['agent'].batch, mask=agent_loss_mask)
 
         lane_mask = data['lane'].partition_mask == BEFORE_PARTITION
         lane_noise[lane_mask] = 0.
@@ -521,7 +530,7 @@ class LDM(nn.Module):
         t_agent = t[agent_batch]
         t_lane = t[lane_batch]
 
-        if self.cfg.train.get('collision_weight', 0.0) > 0.0:
+        if self.cfg.train.get('collision_weight', 0.0) > 0.0 and self.cfg_model.decode_in_training:
             loss, agent_loss, lane_loss, collision_penalty = self.p_losses(x_agent, x_lane, data, t_agent, t_lane)
 
             loss_dict = {

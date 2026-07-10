@@ -8,7 +8,7 @@ class GeometricLoss(nn.Module):
         self.mean_dim = mean_dim
         self.apply_mean = apply_mean
 
-    def forward(self, pred, targ, batch):
+    def forward(self, pred, targ, batch, mask=None):
         loss = self._loss(pred, targ)
 
         num_samples = int(batch.max().detach()) + 1
@@ -19,11 +19,16 @@ class GeometricLoss(nn.Module):
 
         if self.apply_mean:
             loss = loss.mean(self.mean_dim)
+
+        # optional per-element weight (e.g. FOV dropout mask): 0 excludes an element from the mean entirely
+        weights = torch.ones(batch_size, device=loss.device, dtype=loss.dtype) if mask is None else mask.to(loss.dtype)
+        loss = loss * weights
+
         loss_per_sample = loss_per_sample.scatter_add_(0, batch.type(torch.int64), loss)
-        count_per_sample = count_per_sample.scatter_add_(0, batch.type(torch.int64), torch.ones(batch_size, device=loss.device, dtype=loss.dtype))
+        count_per_sample = count_per_sample.scatter_add_(0, batch.type(torch.int64), weights)
 
         # Compute mean loss for each sample
-        loss_batch = loss_per_sample / count_per_sample
+        loss_batch = loss_per_sample / count_per_sample.clamp(min=1e-6)
 
         # Return the overall mean of the mean losses
         return loss_batch

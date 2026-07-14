@@ -4,18 +4,19 @@ import glob
 from tqdm import tqdm
 from utils.train_helpers import create_lambda_lr_cosine, create_lambda_lr_linear, create_lambda_lr_constant, normalize_key
 from nn_modules.ldm import LDM
+from nn_modules.text_encoders.umt5 import T5LayerNorm
 from models.scenario_control_autoencoder import ScenarioControlAutoEncoder
 from utils.data_container import ScenarioDreamerData
 from torch_geometric.loader import DataLoader
 from torch_geometric.data import Batch
 from cfgs.config import PROPORTION_NOCTURNE_COMPATIBLE, NON_PARTITIONED, NOCTURNE_COMPATIBLE
 from utils.pyg_helpers import get_edge_index_complete_graph, get_edge_index_bipartite
-from utils.data_helpers import unnormalize_scene, normalize_latents, unnormalize_latents, convert_batch_to_scenarios, reorder_indices
+from utils.data_helpers import unnormalize_scene, unnormalize_scene_mixed_modes, normalize_latents, unnormalize_latents, convert_batch_to_scenarios, reorder_indices
 from utils.inpainting_helpers import normalize_and_crop_scene, sample_num_lanes_agents_inpainting
 from utils.sim_env_helpers import sample_route, get_default_route_center_yaw
 from utils.lane_graph_helpers import estimate_heading
 from utils.torch_helpers import from_numpy
-from utils.viz import visualize_batch
+from utils.viz import visualize_batch, visualize_batch_2d3d
 
 import torch 
 from torch import nn
@@ -29,14 +30,23 @@ class ScenarioControlLDM(pl.LightningModule):
         super(ScenarioControlLDM, self).__init__()
 
         self.save_hyperparameters()
-        self.cfg = cfg 
+        self.cfg = cfg
         self.cfg_model = cfg.model
         self.cfg_dataset = self.cfg.dataset
+        # '3d' agent states are [x, y, z, vel, cos, sin, length, width, height] (state_dim=9);
+        # '2d' (the default, for old checkpoints predating the 3d/image-conditioning port) are
+        # [x, y, vel, cos, sin, length, width] (state_dim=7) -- unnormalize_scene/visualize_batch
+        # only know how to read the 2d layout, so this flag picks the matching 3d variant instead
+        # of silently misreading agent channels (e.g. reading vel as cos_theta).
+        self.dimension = self.cfg.get('dimension', '2d')
         self.diff_model = LDM(self.cfg, cfg_ae)
         self.autoencoder = ScenarioControlAutoEncoder.load_from_checkpoint(self.cfg_model.autoencoder_path, cfg=cfg_ae, map_location='cpu')
         
         self.init_prob_matrix = torch.load(self.cfg.eval.init_prob_matrix_path)
         self.ema = ExponentialMovingAverage(self.diff_model.parameters(), decay=self.cfg.train.ema_decay)
+
+        # materializes self.diff_model.text_encoder; no-ops when text_conditioning=False or use_cached_text_embeds=True
+        self.diff_model.load_text_encoder()
 
     
     def on_train_start(self):
@@ -108,7 +118,7 @@ class ScenarioControlLDM(pl.LightningModule):
             subset_data_list = data.index_select(indices)
             subset_data = Batch.from_data_list(subset_data_list)  
             
-            _, images_to_log = self.forward(
+            _, images_to_log, images_to_log_gt = self.forward(
                 subset_data,
                 'train', # mode
                 batch_idx,
@@ -117,9 +127,11 @@ class ScenarioControlLDM(pl.LightningModule):
                 save_wandb=self.cfg.train.track,
                 num_samples_to_visualize=self.cfg.train.num_samples_to_visualize
             )
-            
+
             if self.cfg.train.track and visualize:
                 self.logger.experiment.log(images_to_log)
+                if images_to_log_gt is not None:
+                    self.logger.experiment.log(images_to_log_gt)
 
 
     def test_step(self, data, batch_idx):
@@ -128,13 +140,14 @@ class ScenarioControlLDM(pl.LightningModule):
             sampler directly on the batch rather than going through generate()/_initialize_pyg_dset,
             since the conditioning data (dino_feats/depth_map/structure) already comes from the dataloader."""
         with self.ema.average_parameters():
-            data, _ = self.forward(
+            data, _, _ = self.forward(
                 data,
                 self.cfg.eval.mode,
                 batch_idx,
                 viz_dir=self.cfg.eval.viz_dir,
                 visualize=self.cfg.eval.visualize,
                 save_wandb=False,
+                vis_gt=self.cfg.eval.get('visualize_gt', False),
             )
             convert_batch_to_scenarios(
                 data,
@@ -150,14 +163,18 @@ class ScenarioControlLDM(pl.LightningModule):
 
     def forward(self,
                 data,
-                mode, 
-                batch_idx, 
-                viz_dir=None, 
-                visualize=False, 
-                save_wandb=False, 
-                num_samples_to_visualize=None):
+                mode,
+                batch_idx,
+                viz_dir=None,
+                visualize=False,
+                save_wandb=False,
+                num_samples_to_visualize=None,
+                vis_gt=True):
         """ Forward pass of the model. Generates samples from the diffusion model and decodes them using the autoencoder.
-            Also visualizes the generated samples if visualize is True."""
+            Also visualizes the generated samples if visualize is True. If vis_gt is also True, additionally decodes
+            and visualizes the real ground-truth reference scene (data['agent'/'lane'].latents) alongside it, for
+            qualitative comparison -- a no-op when the dataset doesn't attach ground-truth latents (e.g. pure
+            initial_scene generation from NuplanDatasetLDMInit)."""
         data = data.to(self.device)
         agent_latents, lane_latents = self.diff_model.forward(data, mode=mode)
         agent_latents, lane_latents = unnormalize_latents(
@@ -174,51 +191,103 @@ class ScenarioControlLDM(pl.LightningModule):
             lane_latents, 
             data)
         
-        agent_samples, lane_samples = unnormalize_scene(
-            agent_samples, 
-            lane_samples,
-            fov=self.cfg_dataset.fov,
-            min_speed=self.cfg_dataset.min_speed,
-            max_speed=self.cfg_dataset.max_speed,
-            min_length=self.cfg_dataset.min_length,
-            max_length=self.cfg_dataset.max_length,
-            min_width=self.cfg_dataset.min_width,
-            max_width=self.cfg_dataset.max_width,
-            min_lane_x=self.cfg_dataset.min_lane_x,
-            min_lane_y=self.cfg_dataset.min_lane_y,
-            max_lane_x=self.cfg_dataset.max_lane_x,
-            max_lane_y=self.cfg_dataset.max_lane_y)
-        
+        if self.dimension == '3d':
+            agent_samples, lane_samples = unnormalize_scene_mixed_modes(
+                data, agent_samples, lane_samples, self.cfg_dataset, dim='3d')
+        else:
+            agent_samples, lane_samples = unnormalize_scene(
+                agent_samples,
+                lane_samples,
+                fov=self.cfg_dataset.fov,
+                min_speed=self.cfg_dataset.min_speed,
+                max_speed=self.cfg_dataset.max_speed,
+                min_length=self.cfg_dataset.min_length,
+                max_length=self.cfg_dataset.max_length,
+                min_width=self.cfg_dataset.min_width,
+                max_width=self.cfg_dataset.max_width,
+                min_lane_x=self.cfg_dataset.min_lane_x,
+                min_lane_y=self.cfg_dataset.min_lane_y,
+                max_lane_x=self.cfg_dataset.max_lane_x,
+                max_lane_y=self.cfg_dataset.max_lane_y)
+
         if visualize:
             print(f"Visualizing batch {batch_idx}...")
-            
+
             if num_samples_to_visualize is None:
                 num_samples_to_visualize = data.batch_size
-            
-            images_to_log_batch = visualize_batch(
-                num_samples_to_visualize, 
-                agent_samples, 
-                lane_samples, 
-                agent_types, 
-                lane_types, 
-                lane_conn_samples, 
-                data, 
-                viz_dir, 
-                epoch=self.current_epoch,
-                batch_idx=batch_idx,
-                save_wandb=save_wandb)
+
+            if self.dimension == '3d':
+                cond_type = 'img' if self.cfg_model.img_conditioning else ('text' if self.cfg_model.text_conditioning else None)
+                images_to_log_batch = visualize_batch_2d3d(
+                    num_samples_to_visualize,
+                    agent_samples,
+                    lane_samples,
+                    agent_types,
+                    lane_types,
+                    lane_conn_samples,
+                    data,
+                    viz_dir,
+                    epoch=self.current_epoch,
+                    batch_idx=batch_idx,
+                    save_wandb=save_wandb,
+                    cond_type=cond_type,
+                    dim='3d',
+                    dataset=self.cfg.dataset_name)
+
+                has_gt_latents = 'latents' in data['agent'] and 'latents' in data['lane']
+                if vis_gt and has_gt_latents:
+                    agent_samples_gt, lane_samples_gt, agent_types_gt, lane_types_gt, lane_conn_samples_gt = self.autoencoder.model.forward_decoder(
+                        data['agent'].latents,
+                        data['lane'].latents,
+                        data)
+                    agent_samples_gt, lane_samples_gt = unnormalize_scene_mixed_modes(
+                        data, agent_samples_gt, lane_samples_gt, self.cfg_dataset, dim='3d')
+                    images_to_log_gt = visualize_batch_2d3d(
+                        num_samples_to_visualize,
+                        agent_samples_gt,
+                        lane_samples_gt,
+                        agent_types_gt,
+                        lane_types_gt,
+                        lane_conn_samples_gt,
+                        data,
+                        viz_dir,
+                        epoch=self.current_epoch,
+                        batch_idx=batch_idx,
+                        save_wandb=save_wandb,
+                        gt=True,
+                        cond_type=cond_type,
+                        nuplan_data_root=f"{self.cfg_dataset.nuplan_data_root}/sensor_blobs" if cond_type == 'img' else None,
+                        dim='3d',
+                        dataset=self.cfg.dataset_name)
+                else:
+                    images_to_log_gt = None
+            else:
+                images_to_log_batch = visualize_batch(
+                    num_samples_to_visualize,
+                    agent_samples,
+                    lane_samples,
+                    agent_types,
+                    lane_types,
+                    lane_conn_samples,
+                    data,
+                    viz_dir,
+                    epoch=self.current_epoch,
+                    batch_idx=batch_idx,
+                    save_wandb=save_wandb)
+                images_to_log_gt = None
         else:
             images_to_log_batch = None
+            images_to_log_gt = None
 
         # no longer latents but now decoded geometric data
-        data['agent'].x = agent_samples 
-        data['lane'].x = lane_samples 
+        data['agent'].x = agent_samples
+        data['lane'].x = lane_samples
         data['agent'].type = torch.nn.functional.one_hot(agent_types, num_classes=self.cfg_dataset.num_agent_types)
         if self.cfg.dataset_name == 'nuplan':
             data['lane'].type = torch.nn.functional.one_hot(lane_types, num_classes=self.cfg_dataset.num_lane_types)
         data['lane', 'to', 'lane'].type = lane_conn_samples
-        
-        return data, images_to_log_batch
+
+        return data, images_to_log_batch, images_to_log_gt
 
 
     def _build_ldm_dset_from_ae_dset_for_inpainting(self, ae_dset, batch_size, num_samples):
@@ -490,6 +559,7 @@ class ScenarioControlLDM(pl.LightningModule):
             viz_dir=None,
             save_wandb = False,
             return_samples=False,
+            vis_gt=False,
             nocturne_compatible_only=False,
     ):
         """ Generate samples using the diffusion model."""
@@ -521,13 +591,14 @@ class ScenarioControlLDM(pl.LightningModule):
                 scenarios = {}
                 for batch_idx, data in enumerate(tqdm(dataloader)):
                     # updates data object with generated samples 
-                    data, images_to_log_batch = self.forward(
-                        data, 
+                    data, images_to_log_batch, _ = self.forward(
+                        data,
                         mode,
-                        batch_idx, 
-                        viz_dir=viz_dir, 
-                        visualize=visualize, 
-                        save_wandb=save_wandb)
+                        batch_idx,
+                        viz_dir=viz_dir,
+                        visualize=visualize,
+                        save_wandb=save_wandb,
+                        vis_gt=vis_gt)
                     if visualize and save_wandb:
                         images_to_log.update(images_to_log_batch)
                     batch_of_scenarios = convert_batch_to_scenarios(
@@ -558,8 +629,20 @@ class ScenarioControlLDM(pl.LightningModule):
     
 
     def on_load_checkpoint(self, checkpoint):
-        """ Called when loading a checkpoint. Loads the EMA state dict."""
-        self.ema.load_state_dict(checkpoint['ema_state_dict'])
+        """ Called when loading a checkpoint. Loads the EMA state dict, if it matches the current
+            architecture -- older checkpoints saved before an architecture change (e.g. before
+            img/text-conditioning layers existed) have a different parameter count and can't be
+            restored; torch_ema has no tolerant/strict=False option, so skip with a warning instead
+            of crashing, and just use the freshly-initialized EMA (a copy of the loaded raw weights)."""
+        ema_state_dict = checkpoint['ema_state_dict']
+        num_saved = len(ema_state_dict['shadow_params'])
+        num_current = len(self.ema.shadow_params)
+        if num_saved != num_current:
+            print(f"[on_load_checkpoint] Skipping EMA restore: checkpoint has {num_saved} EMA "
+                  f"parameters, current model has {num_current} (architecture mismatch, likely an "
+                  f"older checkpoint). Falling back to a fresh EMA copy of the loaded raw weights.")
+            return
+        self.ema.load_state_dict(ema_state_dict)
 
 
     def apply_freeze_policy_from_missing(self, missing_keys, mismatch_keys=None):
@@ -591,7 +674,7 @@ class ScenarioControlLDM(pl.LightningModule):
         no_decay = set()
         whitelist_weight_modules = (nn.Linear, nn.Conv1d, nn.Conv2d, nn.Conv3d, nn.MultiheadAttention, nn.LSTM,
                                     nn.LSTMCell, nn.GRU, nn.GRUCell)
-        blacklist_weight_modules = (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d, nn.LayerNorm, nn.Embedding)
+        blacklist_weight_modules = (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d, nn.LayerNorm, nn.Embedding, T5LayerNorm)
         for module_name, module in self.diff_model.named_modules():
             for param_name, param in module.named_parameters():
                 full_param_name = '%s.%s' % (module_name, param_name) if module_name else param_name

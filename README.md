@@ -64,6 +64,8 @@ wandb login
 
 ## Dataset Preparation <a name="dataset-preparation"></a>
 
+Dataset for downloading is coming soon! You could also follow the steps below to extract and preprocess the data yourself.
+
 ### NuPlan
 
 We use the same extracted NuPlan data as [SLEDGE](https://github.com/autonomousvision/sledge), with minor modifications tailored for **ScenarioControl**. Our modified fork for extracting the Nuplan data is available [here](https://github.com/lilligao/sledge-scenario-control).
@@ -115,7 +117,7 @@ Pre-trained checkpoints can be downloaded from <a href="https://drive.google.com
    - LDM for image-conditioning: coming soon!
    - LDM for prompt-conditioning: coming soon! 
 
-## Inference <a name="inference"></a>
+
 
 ### Autoencoder Latent Caching:
 ````bash
@@ -130,9 +132,6 @@ python eval.py \
 ````
 
 
-### Generate Scenes with LDM with Conditioning
-Coming soon!
-
 ## Training <a name="training"></a>
 
 ### Finetune LDM with Image Conditioning
@@ -143,7 +142,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 python train.py \
   model_name=ldm_cond \
   ldm.model.autoencoder_run_name=scenario_control_autoencoder3d_nuplan \
   ldm.dataset.load_single_img_cond=True \
-  ldm.dataset.load_scene_type='2' \
+  ldm.dataset.load_scene_type='02' \
   ldm.model.img_conditioning=True \
   ldm.model.decode_in_training=True \
   ldm.train.run_name=scenario_control_ldm_img_cond_nuplan \
@@ -154,12 +153,78 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 python train.py \
   ldm.train.pretrained_dir=$SCRATCH_ROOT/checkpoints/scenario_control_ldm_base_nuplan \
   ldm.train.freeze_pretrained=True \
   ldm.train.collision_weight=0.001 \
-  ldm.train.save_top_k=-1 \
-  ldm.train.check_val_every_n_epoch=2 \
-  ldm.train.num_samples_to_visualize=1 \
   ldm.datamodule.train_batch_size=64 \
   ldm.datamodule.val_batch_size=64
 ````
+
+### Finetune LDM with Prompt Conditioning
+Finetunes a pretrained unconditional LDM checkpoint to add text-prompt conditioning via a frozen UMT5 text encoder. Captions can be cached (coming soon!) and are encoded on the fly since `ldm.dataset.use_cached_text_embeds=False`; set it to `True` instead if you've precomputed a `.pt` text-embedding cache. 
+````bash
+CUDA_VISIBLE_DEVICES=0,1,2,3 python train.py \
+  dataset_name=nuplan \
+  model_name=ldm_cond \
+  ldm.model.autoencoder_run_name=scenario_control_autoencoder3d_nuplan \
+  ldm.dataset.load_scene_type='01' \
+  ldm.dataset.load_captions=True \
+  ldm.model.text_conditioning=True \
+  ldm.dataset.use_cached_text_embeds=False \
+  ldm.model.decode_in_training=True \
+  ldm.train.run_name=scenario_control_ldm_prompt_cond_nuplan \
+  ldm.train.devices=4 \
+  ldm.train.lr=5e-5 \
+  ldm.train.track=True \
+  ldm.train.finetune=True \
+  ldm.train.pretrained_dir=$SCRATCH_ROOT/checkpoints/scenario_control_ldm_base_nuplan \
+  ldm.train.freeze_pretrained=True \
+  ldm.train.collision_weight=0.001 \
+  ldm.datamodule.train_batch_size=64 \
+  ldm.datamodule.val_batch_size=64
+````
+
+## Inference <a name="inference"></a>
+### Generate Initial Scenes with LDM with Conditioning
+Initial Scene Generation (Image Conditioning):
+````bash
+python test.py \
+  dataset_name=nuplan \
+  model_name=ldm_cond \
+  ckpt_path=$SCRATCH_ROOT/checkpoints/scenario_control_ldm_img_cond_nuplan/last.ckpt \
+  ldm.model.autoencoder_run_name=scenario_control_autoencoder3d_nuplan \
+  ldm.model.img_conditioning=True \
+  ldm.model.decode_in_training=True \
+  ldm.dataset.load_single_img_cond=True \
+  ldm.dataset.load_scene_type='02' \
+  ldm.eval.mode=initial_scene \
+  ldm.eval.run_name=scenario_control_ldm_img_cond_nuplan_test \
+  ldm.eval.num_samples=100 \
+  ldm.eval.visualize=True \
+  ldm.eval.visualize_gt=True \
+  ldm.eval.cache_samples=True \
+  ldm.datamodule.test_batch_size=64
+````
+
+Initial Scene Generation (Prompt Conditioning):
+````bash
+python test.py \
+  dataset_name=nuplan \
+  model_name=ldm_cond \
+  ckpt_path=$SCRATCH_ROOT/checkpoints/scenario_control_ldm_prompt_cond_nuplan/last.ckpt \
+  ldm.model.autoencoder_run_name=scenario_control_autoencoder3d_nuplan \
+  ldm.model.text_conditioning=True \
+  ldm.model.decode_in_training=True \
+  ldm.dataset.load_captions=True \
+  ldm.dataset.use_cached_text_embeds=False \
+  ldm.dataset.load_scene_type='01' \
+  ldm.eval.mode=initial_scene \
+  ldm.eval.run_name=scenario_control_ldm_prompt_cond_nuplan_test \
+  ldm.eval.num_samples=100 \
+  ldm.eval.visualize=True \
+  ldm.eval.cache_samples=True \
+  ldm.datamodule.test_batch_size=64
+````
+
+### Outpainting 
+Coming soon! 
 
 ## Evaluation <a name="evaluation"></a>
 Coming soon!

@@ -53,6 +53,11 @@ class NuplanDatasetLDM(Dataset):
         self.is_conditioned_base = self.is_conditioned_flags.copy()
         self.drop_condition_flags = None
 
+        self.load_captions = self.cfg.get('load_captions', False)
+        self.captions_dir = os.path.join(self.cfg.get('captions_dir', ''), f"{self.split_name}")
+        self.use_cached_text_embeds = self.cfg.get('use_cached_text_embeds', False)
+        self.text_embeds_dir = os.path.join(self.cfg.get('text_embeds_dir', ''), f"{self.split_name}")
+
         self.load_single_img_cond = self.cfg.get('load_single_img_cond', False)
         self.img_latents_dir = os.path.join(self.cfg.get('img_latents_dir', ''), f"{self.split_name}")
         self.uncond_dataset_path = self.cfg.get('uncond_dataset_path', None)
@@ -134,6 +139,40 @@ class NuplanDatasetLDM(Dataset):
         d['agent', 'to', 'agent'].edge_index = from_numpy(edge_index_agent_to_agent)
         d['lane', 'to', 'agent'].edge_index = from_numpy(edge_index_lane_to_agent)
 
+        d['text'] = None
+        d['text_embeds'] = None
+        if self.load_captions:
+            # captions are extracted once per raw camera frame (scene-type suffix "_0"), so scene-type
+            # 1/2 variants of the same frame share the same caption -- same sharing convention as dino_feats
+            caption_name = f'{raw_file_name}_captions.json'
+            caption_name = caption_name.replace("_1_captions.json", "_0_captions.json")
+            caption_name = caption_name.replace("_2_captions.json", "_0_captions.json")
+            caption_path = os.path.join(self.captions_dir, caption_name)
+
+            if os.path.exists(caption_path):
+                with open(caption_path, 'r') as f:
+                    d['text'] = json.load(f)['BEV']
+            else:
+                d['text'] = "A realistic driving scene."
+
+            if self.split_name != 'train':
+                d['neg_text'] = self.cfg.get('neg_text', "An unrealistic driving scene.")
+
+        if self.use_cached_text_embeds:
+            text_embeds_name = f'{raw_file_name}_captions.pt'
+            text_embeds_name = text_embeds_name.replace("_1_captions.pt", "_0_captions.pt")
+            text_embeds_name = text_embeds_name.replace("_2_captions.pt", "_0_captions.pt")
+            text_embeds_path = os.path.join(self.text_embeds_dir, text_embeds_name)
+            if not os.path.exists(text_embeds_path):
+                raise FileNotFoundError(f"Text embeds file not found: {text_embeds_path}")
+            d['text_embeds'] = torch.load(text_embeds_path)
+
+            if self.split_name != 'train':
+                neg_text_embeds_path = os.path.join(self.text_embeds_dir, 'negative_prompt.pt')
+                if not os.path.exists(neg_text_embeds_path):
+                    raise FileNotFoundError(f"Negative text embeds file not found: {neg_text_embeds_path}")
+                d['neg_text_embeds'] = torch.load(neg_text_embeds_path)
+
         if self.load_single_img_cond:
             if is_conditioned:
                 # the DINO+depth features are extracted once per front-camera frame (scene-type suffix "_0"),
@@ -156,9 +195,14 @@ class NuplanDatasetLDM(Dataset):
 
                 d['dino_feats'] = dino_feats
                 d['depth_map'] = depth_map
+                # only used to locate the raw conditioning camera image for visualize_gt; 'cam_infos' is
+                # only present in the latent cache when it was cached with ae.dataset.load_images=True
+                cam_infos = data.get('cam_infos', {})
+                d['cam_infos'] = {k: v for k, v in cam_infos.items() if k == 'CAM_F0'}
             else:
                 d['dino_feats'] = torch.zeros(torch.Size(self.cfg.dino_feats_shape))
                 d['depth_map'] = torch.zeros(torch.Size(self.cfg.depth_map_shape))
+                d['cam_infos'] = {}
 
         return d
 

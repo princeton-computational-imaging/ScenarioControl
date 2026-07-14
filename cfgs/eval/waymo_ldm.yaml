@@ -9,6 +9,7 @@ init_prob_matrix_path: ${project_root}/metadata/initial_prob_matrix_waymo.pt # p
 inpainting_prob_matrix_path: ${project_root}/metadata/inpainting_prob_matrix_waymo.pt # path to inpainting num lanes and agents probability matrix
 batch_size: 32 # batch size for evaluation
 visualize: False # visualize samples during evaluation?
+visualize_gt: False # also decode/visualize the ground-truth reference scene alongside the generated one (only meaningful when the dataset attaches ground-truth latents, e.g. not for pure initial_scene generation from NuplanDatasetLDMInit)
 viz_dir: ${project_root}/viz_gen_samples_${ldm.eval.run_name} # directory to save visualizations of generated samples
 cache_samples: False # cache samples to disk?
 conditioning_path: null # optional path to conditioning data for lane-conditioned or inpainting evaluation

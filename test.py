@@ -1,4 +1,5 @@
 import os
+os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")  # avoid the fork-after-tokenizer-init warning from DataLoader workers
 import hydra
 from models.scenario_control_ldm import ScenarioControlLDM
 from datasets.nuplan.dataset_ldm_nuplan_init import NuplanDatasetLDMInit
@@ -36,7 +37,10 @@ def test_ldm(cfg, cfg_ae, save_dir=None):
                 break
     assert ckpt_path is not None, "No checkpoint found in the save directory."
 
-    model = ScenarioControlLDM.load_from_checkpoint(ckpt_path, cfg=cfg, cfg_ae=cfg_ae, map_location='cpu')
+    # strict=False: this may be an older checkpoint predating an architecture change (e.g. before
+    # img/text-conditioning layers existed) -- PyTorch Lightning will warn about any missing/unexpected
+    # keys so you can judge how much of the loaded model is actually from the checkpoint vs. fresh init
+    model = ScenarioControlLDM.load_from_checkpoint(ckpt_path, cfg=cfg, cfg_ae=cfg_ae, map_location='cpu', strict=False)
 
     trainer = pl.Trainer(accelerator='auto',
                          devices=1,
@@ -59,6 +63,8 @@ def main(cfg):
         raise NotImplementedError("test.py only supports LDM generation (model_name containing 'ldm').")
 
     model_name = cfg.model_name
+    ckpt_path = cfg.get('ckpt_path', None)  # root-level field; must capture before cfg is reassigned below
+    dimension = cfg.get('dimension', '2d')  # root-level field; must capture before cfg is reassigned below
     cfg_ae = cfg.ae
     cfg = cfg.ldm
     OmegaConf.set_struct(cfg, False)   # unlock to allow setting dataset name
@@ -66,6 +72,8 @@ def main(cfg):
     cfg.dataset_name = dataset_name
     cfg_ae.dataset_name = dataset_name
     cfg.model_name = model_name
+    cfg.ckpt_path = ckpt_path
+    cfg.dimension = dimension
     OmegaConf.set_struct(cfg, True)    # relock
     OmegaConf.set_struct(cfg_ae, True)
 

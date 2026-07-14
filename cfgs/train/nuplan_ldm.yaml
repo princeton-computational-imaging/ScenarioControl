@@ -11,7 +11,7 @@ check_val_every_n_epoch: 2 # from base.yaml
 ema_decay: 0.9999 # EMA decay for model weights
 guidance_scale: 4.0 # guidance scale for classifier-free guidance
 devices: 4 # from base.yaml
-num_samples_to_visualize: 10 # from base.yaml
+num_samples_to_visualize: 2 # from base.yaml
 viz_dir: ${project_root}/viz_val_${ldm.train.run_name} # from base.yaml
 
 # this is only computed once at the start of training

@@ -1,4 +1,5 @@
 import os
+os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")  # avoid the fork-after-tokenizer-init warning from DataLoader workers
 import hydra
 from models.scenario_control_autoencoder import ScenarioControlAutoEncoder
 from models.scenario_control_ldm import ScenarioControlLDM
@@ -110,6 +111,7 @@ def main(cfg):
     # need to track whether we are training a nuplan or waymo model as
     # nuplan predicts lane types (lane/green light/red light) and waymo does not
     dataset_name = cfg.dataset_name.name
+    dimension = cfg.get('dimension', '2d')  # root-level field; must capture before cfg is reassigned below
     if 'autoencoder' in cfg.model_name:
         model_name = cfg.model_name
         cfg = cfg.ae
@@ -127,6 +129,7 @@ def main(cfg):
         cfg.dataset_name = dataset_name
         cfg_ae.dataset_name = dataset_name
         cfg.model_name = model_name
+        cfg.dimension = dimension
         OmegaConf.set_struct(cfg, True)    # relock
         OmegaConf.set_struct(cfg_ae, True)
 

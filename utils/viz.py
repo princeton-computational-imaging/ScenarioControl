@@ -638,8 +638,8 @@ def visualize_batch_2d3d(num_samples,
             lg_type=lg_type[i] if lg_type is not None else None,
             dataset=dataset)
 
-        if cond_type == 'img' and gt:
-            cond_img_path = os.path.join(nuplan_data_root, data['cam_info']['CAM_F0']['filename_jpg'][i])
+        if cond_type == 'img' and gt and nuplan_data_root is not None and 'cam_infos' in data:
+            cond_img_path = os.path.join(nuplan_data_root, data['cam_infos']['CAM_F0']['filename_jpg'][i])
             if os.path.exists(cond_img_path):
                 cond_img = cv2.imread(cond_img_path)
                 cond_img = cv2.cvtColor(cond_img, cv2.COLOR_BGR2RGB)

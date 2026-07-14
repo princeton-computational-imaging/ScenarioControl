@@ -132,6 +132,8 @@ class ScenarioControlAutoEncoder(pl.LightningModule):
         lane_batch = data['lane'].batch.cpu().numpy()
         if self.cfg.dataset_name == 'nuplan':
             map_id = data['map_id'].cpu().numpy()
+            ego_state_og = data['ego_state_og']  # [ego_translation, ego_rotation, ego_dim, ego_heading]
+            cam_infos = data['cam_info']
 
         for i in range(data.batch_size):
             idx = data.idx[i].item()
@@ -179,7 +181,22 @@ class ScenarioControlAutoEncoder(pl.LightningModule):
                 d['nocturne_compatible'] = noct_compatible
             else:
                 d['map_id'] = map_id_i
-            
+                d['ego_state_og'] = ego_state_og[i]
+                # extract only the ith element from each entry in cam_infos
+                if self.cfg_dataset.load_images:
+                    cam_infos_i = {}
+                    for k, v in cam_infos.items():
+                        cam_infos_i[k] = {}
+                        for k2, v2 in v.items():
+                            val = v2[i]
+                            # if it's a tensor, ensure it's on CPU
+                            if torch.is_tensor(val):
+                                val = val.detach().cpu()
+                                if val.numel() == 1:
+                                    val = val.item()
+                            cam_infos_i[k][k2] = val
+                    d['cam_infos'] = cam_infos_i
+
             with open(file_path, 'wb') as f:
                 pickle.dump(d, f)
 

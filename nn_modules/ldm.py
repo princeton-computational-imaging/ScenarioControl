@@ -87,6 +87,9 @@ class LDM(nn.Module):
                 checkpoint_path=text_encoder_cfg.checkpoint_path,
                 tokenizer_path=text_encoder_cfg.tokenizer,
             )
+            # frozen pretrained text encoder -- never trained, regardless of finetune/freeze_pretrained settings
+            for p in self.text_encoder.parameters():
+                p.requires_grad = False
             print(f"Loaded text encoder from {text_encoder_cfg.checkpoint_path}")
 
     def predict_start_from_noise(self, x_t, t, noise):

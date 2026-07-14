@@ -27,6 +27,8 @@ dino_dim_w: 14 # DINO patch grid width
 
 # text conditioning (injected via cross-attention)
 text_conditioning: false # whether to use text conditioning
+text_feat_dim: 4096 # dimension of text features
+drop_prob_text: 0.0 # probability of dropping text conditioning per-sample during training (classifier-free guidance)
 
 # whether to decode latents into full scene states during training (needed for the collision penalty regularizer)
 decode_in_training: false

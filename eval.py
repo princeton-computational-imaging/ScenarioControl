@@ -74,6 +74,7 @@ def eval_ldm(cfg, cfg_ae, save_dir=None):
         viz_dir=cfg.eval.viz_dir,
         save_wandb=False,
         return_samples=False,
+        vis_gt=cfg.eval.get('visualize_gt', False),
     )
 
 
@@ -100,6 +101,8 @@ def main(cfg):
     # need to track whether we are evaluating a nuplan or waymo model as
     # nuplan predicts lane types (lane/green light/red light) and waymo does not
     dataset_name = cfg.dataset_name.name
+    ckpt_path = cfg.get('ckpt_path', None)  # root-level field; must capture before cfg is reassigned below
+    dimension = cfg.get('dimension', '2d')  # root-level field; must capture before cfg is reassigned below
     if 'autoencoder' in cfg.model_name:
         model_name = cfg.model_name
         cfg = cfg.ae
@@ -117,6 +120,8 @@ def main(cfg):
         cfg.dataset_name = dataset_name
         cfg_ae.dataset_name = dataset_name
         cfg.model_name = model_name
+        cfg.ckpt_path = ckpt_path
+        cfg.dimension = dimension
         OmegaConf.set_struct(cfg, True)    # relock
         OmegaConf.set_struct(cfg_ae, True)
 

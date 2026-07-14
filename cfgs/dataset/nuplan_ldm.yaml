@@ -10,12 +10,17 @@ lane_latents_mean: null # mean of lane latents, to be computed from training dat
 lane_latents_std: null # std of lane latents, to be computed from training data
 
 # text conditioning
-use_cached_text_embeds: false # if true, read precomputed text embeddings from data['text_embeds'] instead of encoding data['text'] on the fly
+load_captions: false # if true, load per-scene captions for text conditioning
+captions_dir: ${scratch_root}/captions_bev/gpt_bev # directory of cached caption .json files (one per scene, key "BEV")
+neg_text: "An unrealistic driving scene." # negative prompt used for classifier-free guidance on non-train splits (val/test)
+use_cached_text_embeds: false # if true, read precomputed text embeddings from data['text_embeds']/data['neg_text_embeds'] instead of encoding data['text']/data['neg_text'] on the fly
+text_embeds_dir: ${scratch_root}/text_embeds/nuplan # directory of cached text-embedding .pt files (one per scene, plus a shared negative_prompt.pt); only used when use_cached_text_embeds=true
 
 # image conditioning
 load_scene_type: null # if set (e.g. '2' or '12'), only load cached scenes whose filename ends in one of these scene-type digits
 load_single_img_cond: false # if true, load per-scene DINO features + depth map for image conditioning
 img_latents_dir: ${scratch_root}/dino_depth_features/nuplan/dinov3_zoedepth # directory of cached DINO+depth .npz features (see extract_dino_depth_features.py)
+nuplan_data_root: ${nuplan_data_folder} # root dir of the raw nuPlan dataset (contains sensor_blobs/); only used to locate the raw conditioning camera image when visualize_gt=true
 dino_feats_shape: [1, "${ldm.model.dino_feat_channels}", "${ldm.model.dino_dim_h}", "${ldm.model.dino_dim_w}"] # zero-fill shape for unconditioned samples; leading 1 becomes the batch dim once PyG concatenates
 depth_map_shape: [1, 1, 384, 672] # zero-fill shape for unconditioned samples; must match the native (H, W) resolution extract_dino_depth_features.py saved, since a mismatch breaks batching when conditioned/unconditioned samples share a batch
 

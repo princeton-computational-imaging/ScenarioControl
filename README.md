@@ -96,11 +96,15 @@ We use the same extracted NuPlan data as [SLEDGE](https://github.com/autonomousv
    ```
 
 5. **Extract DINO patch features and depth maps for image conditioning**  
-   Only required if you plan to train with `ldm.model.img_conditioning=True` (e.g. via the `model@ldm.model=ldm_image` config group). This extracts DINOv3 patch features and a monocular depth map for each camera frame, caches them to disk as the image-conditioning inputs consumed by `nn_modules/dit.py`, then normalizes every cached depth map to a single consistent shape (the depth estimator's raw output resolution can vary slightly across frames, but batching requires every sample to share the same shape).
+   Run the following to extract DINOv3 patch features and a monocular depth map for each camera frame.
    ```
    export NUPLAN_DATA_FOLDER=/path/to/nuplan-v1.1 # root of the raw nuPlan dataset (contains sensor_blobs/)
    bash scripts/extract_dino_depth_features.sh
    ```
+
+6. **Extract captions for prompt conditioning**
+    Coming soon!
+
 
 ### Waymo
 

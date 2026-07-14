@@ -102,8 +102,8 @@ We use the same extracted NuPlan data as [SLEDGE](https://github.com/autonomousv
    bash scripts/extract_dino_depth_features.sh
    ```
 
-6. **Extract captions for prompt conditioning**
-    Coming soon!
+6. **Extract captions for prompt conditioning**  
+   Coming soon!
 
 
 ### Waymo

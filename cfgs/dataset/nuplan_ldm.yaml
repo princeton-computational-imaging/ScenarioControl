@@ -19,7 +19,7 @@ text_embeds_dir: ${scratch_root}/text_embeds/nuplan # directory of cached text-e
 # image conditioning
 load_scene_type: null # if set (e.g. '2' or '12'), only load cached scenes whose filename ends in one of these scene-type digits
 load_single_img_cond: false # if true, load per-scene DINO features + depth map for image conditioning
-img_latents_dir: ${scratch_root}/dino_depth_features/nuplan/dinov3_zoedepth # directory of cached DINO+depth .npz features (see extract_dino_depth_features.py)
+img_latents_dir: ${scratch_root}/dino_depth_features/nuplan/dinov3_zoedepth_resized # directory of cached DINO+depth .npz features, normalized to a consistent depth_map shape (see extract_dino_depth_features.py + resize_dino_depth_features.py)
 nuplan_data_root: ${nuplan_data_folder} # root dir of the raw nuPlan dataset (contains sensor_blobs/); only used to locate the raw conditioning camera image when visualize_gt=true
 dino_feats_shape: [1, "${ldm.model.dino_feat_channels}", "${ldm.model.dino_dim_h}", "${ldm.model.dino_dim_w}"] # zero-fill shape for unconditioned samples; leading 1 becomes the batch dim once PyG concatenates
 depth_map_shape: [1, 1, 384, 672] # zero-fill shape for unconditioned samples; must match the native (H, W) resolution extract_dino_depth_features.py saved, since a mismatch breaks batching when conditioned/unconditioned samples share a batch

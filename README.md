@@ -96,7 +96,7 @@ We use the same extracted NuPlan data as [SLEDGE](https://github.com/autonomousv
    ```
 
 5. **Extract DINO patch features and depth maps for image conditioning**  
-   Only required if you plan to train with `ldm.model.img_conditioning=True` (e.g. via the `model@ldm.model=ldm_image` config group). This extracts DINOv3 patch features and a monocular depth map for each camera frame and caches them to disk as the image-conditioning inputs consumed by `nn_modules/dit.py`.
+   Only required if you plan to train with `ldm.model.img_conditioning=True` (e.g. via the `model@ldm.model=ldm_image` config group). This extracts DINOv3 patch features and a monocular depth map for each camera frame, caches them to disk as the image-conditioning inputs consumed by `nn_modules/dit.py`, then normalizes every cached depth map to a single consistent shape (the depth estimator's raw output resolution can vary slightly across frames, but batching requires every sample to share the same shape).
    ```
    export NUPLAN_DATA_FOLDER=/path/to/nuplan-v1.1 # root of the raw nuPlan dataset (contains sensor_blobs/)
    bash scripts/extract_dino_depth_features.sh
@@ -128,11 +128,34 @@ python eval.py \
   ae.eval.run_name=scenario_control_autoencoder3d_nuplan \
   ae.dataset.load_images=True \
   ae.eval.cache_latents.enable_caching=True \
-  ae.eval.cache_latents.split_name=[train|val|test]
+  ae.eval.cache_latents.split_name=[train|val|test] \
+  --config-name=config3dtemp
 ````
 
 
 ## Training <a name="training"></a>
+
+### Pretrain Unconditional LDM
+Trains the base unconditional LDM from scratch on all scene types (`load_scene_type='012'`). Image/prompt conditioning are later added on top of this checkpoint via `ldm.train.finetune=True` + `ldm.train.pretrained_dir` (see below).
+````bash
+CUDA_VISIBLE_DEVICES=0,1,2,3 python train.py \
+  dataset_name=nuplan \
+  model_name=ldm_cond \
+  ldm.model.autoencoder_run_name=scenario_control_autoencoder3d_nuplan \
+  ldm.dataset.load_scene_type='012' \
+  ldm.model.img_conditioning=False \
+  ldm.train.run_name=scenario_control_ldm_base_nuplan \
+  ldm.train.devices=4 \
+  ldm.train.lr=5e-5 \
+  ldm.train.track=True \
+  ldm.train.save_top_k=-1 \
+  ldm.train.check_val_every_n_epoch=5 \
+  ldm.train.max_steps=500000 \
+  ldm.train.num_samples_to_visualize=3 \
+  ldm.datamodule.train_batch_size=64 \
+  ldm.datamodule.val_batch_size=64 \
+  --config-name=config3dtemp
+````
 
 ### Finetune LDM with Image Conditioning
 Finetunes a pretrained unconditional LDM checkpoint to add single-image conditioning (DINO patch features + depth map, see [Dataset Preparation](#dataset-preparation)). `ldm.train.freeze_pretrained=True` freezes every weight that loaded from `ldm.train.pretrained_dir`, training only the newly-added image-conditioning layers.
@@ -154,7 +177,8 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 python train.py \
   ldm.train.freeze_pretrained=True \
   ldm.train.collision_weight=0.001 \
   ldm.datamodule.train_batch_size=64 \
-  ldm.datamodule.val_batch_size=64
+  ldm.datamodule.val_batch_size=64 \
+  --config-name=config3dtemp
 ````
 
 ### Finetune LDM with Prompt Conditioning
@@ -178,7 +202,8 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 python train.py \
   ldm.train.freeze_pretrained=True \
   ldm.train.collision_weight=0.001 \
   ldm.datamodule.train_batch_size=64 \
-  ldm.datamodule.val_batch_size=64
+  ldm.datamodule.val_batch_size=64 \
+  --config-name=config3dtemp
 ````
 
 ## Inference <a name="inference"></a>
@@ -200,7 +225,8 @@ python test.py \
   ldm.eval.visualize=True \
   ldm.eval.visualize_gt=True \
   ldm.eval.cache_samples=True \
-  ldm.datamodule.test_batch_size=64
+  ldm.datamodule.test_batch_size=64 \
+  --config-name=config3dtemp
 ````
 
 Initial Scene Generation (Prompt Conditioning):
@@ -220,7 +246,8 @@ python test.py \
   ldm.eval.num_samples=100 \
   ldm.eval.visualize=True \
   ldm.eval.cache_samples=True \
-  ldm.datamodule.test_batch_size=64
+  ldm.datamodule.test_batch_size=64 \
+  --config-name=config3dtemp
 ````
 
 ### Outpainting 

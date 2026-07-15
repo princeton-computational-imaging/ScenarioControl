@@ -88,22 +88,22 @@ We use the same extracted NuPlan data as [SLEDGE](https://github.com/autonomousv
    python merge_meta.py
    ```
 
-4. **Extract train/val/test splits and preprocess data for training**  
+3. **Extract train/val/test splits and preprocess data for training**  
    Run the following to extract train/val/test splits and create the preprocessed data for training.
    ```
    bash scripts/extract_nuplan_data_3dtemp_wimages.sh # create train/val/test splits and create eval set for computing metrics
    bash scripts/preprocess_nuplan_dataset_3dtemp_wimages.sh # preprocess data to facilitate efficient model training
    ```
 
-5. **Extract DINO patch features and depth maps for image conditioning**  
+4. **Extract DINO patch features and depth maps for image conditioning**  
    Run the following to extract DINOv3 patch features and a monocular depth map for each camera frame.
    ```
    export NUPLAN_DATA_FOLDER=/path/to/nuplan-v1.1 # root of the raw nuPlan dataset (contains sensor_blobs/)
    bash scripts/extract_dino_depth_features.sh
    ```
 
-6. **Extract captions for prompt conditioning**  
-   Coming soon!
+5. **Prepare captions for prompt conditioning**  
+   Download our [captions extracted with GPT-4.1-mini](https://drive.google.com/file/d/1C4rHahp-7dozdemavYsw9HFMpjDzwrFK/view?usp=sharing) and place them under `$SCRATCH_ROOT/captions_bev/gpt_bev`
 
 
 ### Waymo

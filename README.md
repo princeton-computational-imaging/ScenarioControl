@@ -169,7 +169,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 python train.py \
   model_name=ldm_cond \
   ldm.model.autoencoder_run_name=scenario_control_autoencoder3d_nuplan \
   ldm.dataset.load_single_img_cond=True \
-  ldm.dataset.load_scene_type='02' \
+  ldm.dataset.load_scene_type='12' \
   ldm.model.img_conditioning=True \
   ldm.model.decode_in_training=True \
   ldm.train.run_name=scenario_control_ldm_img_cond_nuplan \
@@ -222,7 +222,7 @@ python test.py \
   ldm.model.img_conditioning=True \
   ldm.model.decode_in_training=True \
   ldm.dataset.load_single_img_cond=True \
-  ldm.dataset.load_scene_type='02' \
+  ldm.dataset.load_scene_type='2' \
   ldm.eval.mode=initial_scene \
   ldm.eval.run_name=scenario_control_ldm_img_cond_nuplan_test \
   ldm.eval.num_samples=100 \
@@ -244,7 +244,7 @@ python test.py \
   ldm.model.decode_in_training=True \
   ldm.dataset.load_captions=True \
   ldm.dataset.use_cached_text_embeds=False \
-  ldm.dataset.load_scene_type='01' \
+  ldm.dataset.load_scene_type='0' \
   ldm.eval.mode=initial_scene \
   ldm.eval.run_name=scenario_control_ldm_prompt_cond_nuplan_test \
   ldm.eval.num_samples=100 \

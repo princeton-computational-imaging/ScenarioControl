@@ -103,7 +103,7 @@ We use the same extracted NuPlan data as [SLEDGE](https://github.com/autonomousv
    ```
 
 5. **Prepare captions for prompt conditioning**  
-   Download our [captions extracted with GPT-4.1-mini](https://drive.google.com/file/d/1C4rHahp-7dozdemavYsw9HFMpjDzwrFK/view?usp=sharing) and place them under `$SCRATCH_ROOT/captions_bev/gpt_bev`
+   Download our [captions extracted with GPT-4.1-mini](https://drive.google.com/file/d/1V8Koo8LkKDFXFE_SHr-ar0XkTvfi_zK-/view?usp=sharing) and place them under `$SCRATCH_ROOT/captions_bev/gpt_bev`
 
 
 ### Waymo

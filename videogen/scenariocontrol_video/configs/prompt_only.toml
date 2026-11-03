@@ -1,0 +1,82 @@
+# prompt-only variant (per-clip captions, no image). Released as `prompt-only`.
+# Starts from: BASE_CHECKPOINT_PATH, e.g. the released first-frame (its inpaint_embedder is unused) or prompt-only.
+# Launch: see the README "Video Generation > Training" section.
+
+[job]
+task         = "vfm"
+experiment   = "scenariocontrol_video_prompt_only"
+project      = "scenariocontrol"
+group        = "video"
+name         = "scenariocontrol_video_prompt_only"
+wandb_mode   = "disabled"
+
+[model]
+max_num_tokens_after_packing = 24576
+joint_attn_implementation    = "two_way"
+precision                    = "bfloat16"
+lora_enabled        = true
+lora_rank           = 128
+lora_alpha          = 64
+lora_target_modules = "q_proj_moe_gen,k_proj_moe_gen,v_proj_moe_gen,o_proj_moe_gen"
+
+[model.ema]
+enabled         = false
+rate            = 0.1
+iteration_shift = 0
+
+[model.parallelism]
+data_parallel_shard_degree      = -1   # all ranks
+data_parallel_replicate_degree  = 1
+
+[model.compile]
+enabled         = false
+compile_dynamic = true
+
+[model.activation_checkpointing]
+mode                = "full"
+save_ops_regex      = ["fmha"]
+preserve_rng_state  = true
+determinism_check   = "default"
+
+[model.tokenizer]
+vae_path = "${oc.env:WAN_VAE_PATH}"
+
+[optimizer]
+betas          = [0.9, 0.95]
+eps            = 1.0e-6
+fused          = true
+keys_to_select = ["lora_", "control_embedder"]   # everything else is frozen
+lr             = 5.0e-4
+weight_decay   = 0
+
+[scheduler]
+cycle_lengths      = [4000]
+f_max              = [1.0]
+f_min              = [0.0]
+f_start            = [0.0]
+verbosity_interval = 0
+warm_up_steps      = [50]
+
+[trainer]
+distributed_parallelism = "fsdp"
+grad_accum_iter         = 2
+logging_iter            = 1
+max_iter                = 2750
+
+[trainer.callbacks.compile_tokenizer]
+compile_after_iterations = 3
+enabled                  = false
+
+[trainer.callbacks.grad_clip]
+clip_norm    = 0.1
+force_finite = true
+
+[checkpoint]
+# Keys not loaded from BASE_CHECKPOINT_PATH keep their zero/LoRA init.
+keys_to_skip_loading = ["net_ema."]
+load_path            = "${oc.env:BASE_CHECKPOINT_PATH}"
+save_iter            = 250
+
+[dataloader_train]
+max_sequence_length = 24576
+max_caption_tokens  = 2048

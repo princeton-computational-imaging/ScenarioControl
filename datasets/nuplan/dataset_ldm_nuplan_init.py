@@ -14,6 +14,18 @@ from utils.pyg_helpers import get_edge_index_complete_graph, get_edge_index_bipa
 from utils.data_helpers import reparameterize, normalize_latents
 
 
+def image_conditioning(dino_feats, depths):
+    """Cached DINO features (1, C, PH, PW) and depth map (1, H, W) -> the LDM's (dino_feats, depth_map) inputs."""
+    # the leading dim becomes the batch dim once PyG concatenates samples along dim 0, so the
+    # channel dim (size 1) of the depth map must be inserted at position 1, not 0
+    depth_map = torch.nan_to_num(torch.from_numpy(depths).unsqueeze(1))
+
+    depth_min = torch.amin(depth_map, dim=(-2, -1), keepdim=True)
+    depth_max = torch.amax(depth_map, dim=(-2, -1), keepdim=True)
+    depth_map = (depth_map - depth_min) / (depth_max - depth_min + 1e-8)
+    return torch.from_numpy(dino_feats), depth_map
+
+
 class NuplanDatasetLDMInit(Dataset):
     """Seeds conditioned `initial_scene` generation (test.py) from real reference scenes.
 
@@ -98,17 +110,7 @@ class NuplanDatasetLDMInit(Dataset):
             img_latents_path = os.path.join(self.img_latents_dir, img_latents_name)
 
             img_data = np.load(img_latents_path, allow_pickle=False)
-            dino_feats = torch.from_numpy(img_data["dino_feats"])
-            # raw "depths" is (1, H, W) -- the leading dim becomes the batch dim once PyG concatenates
-            # samples along dim 0, so the channel dim (size 1) must be inserted at position 1, not 0
-            depth_map = torch.nan_to_num(torch.from_numpy(img_data["depths"]).unsqueeze(1))
-
-            depth_min = torch.amin(depth_map, dim=(-2, -1), keepdim=True)
-            depth_max = torch.amax(depth_map, dim=(-2, -1), keepdim=True)
-            depth_map = (depth_map - depth_min) / (depth_max - depth_min + 1e-8)
-
-            d['dino_feats'] = dino_feats
-            d['depth_map'] = depth_map
+            d['dino_feats'], d['depth_map'] = image_conditioning(img_data["dino_feats"], img_data["depths"])
 
         d['text'] = None
         d['text_embeds'] = None

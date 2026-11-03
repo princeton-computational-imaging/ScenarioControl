@@ -89,7 +89,7 @@ def train_ldm(cfg, cfg_ae, save_dir=None):
         model = ScenarioControlLDM(cfg=cfg, cfg_ae=cfg_ae)
         ckpt_path = os.path.join(cfg.train.pretrained_dir, 'last.ckpt')
         print("Finetuning from checkpoint: ", ckpt_path)
-        ckpt = torch.load(ckpt_path, map_location='cpu')
+        ckpt = torch.load(ckpt_path, map_location='cpu', weights_only=False)  # Lightning checkpoint (holds the OmegaConf config)
         state_dict = ckpt["state_dict"] if "state_dict" in ckpt else ckpt
         ret = model.load_state_dict(state_dict, strict=False)
         print("[load] missing:", len(ret.missing_keys), "unexpected:", len(ret.unexpected_keys))

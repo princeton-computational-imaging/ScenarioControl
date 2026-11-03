@@ -33,9 +33,15 @@ def postprocess_sim_env(
     - removing colliding/offroad agents
     - remove vehicles whose heading deviation to closest lane is >= heading_tolerance radians
     - remove excessively large vehicles (length > length_tolerance metres)
-    - reformat agents into expected simulator format: shape (N, 1, 8) with attributes: [pos_x, pos_y, vel_x, vel_y, theta, l, w, exists]
+    - reformat agents into expected simulator format: shape (N, 1, 10) with attributes: [pos_x, pos_y, vel_x, vel_y, theta, l, w, exists, z, height]
+      (z, height are 0 for 2D scenes)
     - apply lane graph compression algorithm and resample the lanes to num_points_per_lane each
+    - keep the conditioning frame's cam_infos / ego_state_og (if present) for rendering rollouts
     """
+    # 3D scenes: [x, y, z, speed, cos, sin, l, w, h] -> 2D layout [x, y, speed, cos, sin, l, w] + [z, h]
+    if pre_env['agent_states'].shape[1] == 9:
+        pre_env['agent_states'] = pre_env['agent_states'][:, [0, 1, 3, 4, 5, 6, 7, 2, 8]]
+
     if dataset == 'nuplan':
         LANE_CONNECTION_TYPES = LANE_CONNECTION_TYPES_NUPLAN
     else:
@@ -147,7 +153,7 @@ def postprocess_sim_env(
         pre_env['agent_types'] = pre_env['agent_types'][dynamic_agent_mask]
     
     # reformat agents
-    agents = np.zeros((pre_env['agent_states'].shape[0], 8))
+    agents = np.zeros((pre_env['agent_states'].shape[0], 10))
     agents[:, :2] = pre_env['agent_states'][:, :2]
     agents[:, 2] = (pre_env['agent_states'][:, 2] 
                     * pre_env['agent_states'][:, 3])
@@ -155,8 +161,10 @@ def postprocess_sim_env(
                     * pre_env['agent_states'][:, 4])
     agents[:, 4] = np.arctan2(pre_env['agent_states'][:, 4], 
                                 pre_env['agent_states'][:, 3])
-    agents[:, 5:7] = pre_env['agent_states'][:, 5:]
+    agents[:, 5:7] = pre_env['agent_states'][:, 5:7]
     agents[:, 7] = 1
+    if pre_env['agent_states'].shape[1] == 9:
+        agents[:, 8:10] = pre_env['agent_states'][:, 7:9]
     agents = agents[:, None]
     agent_types = np.eye(5)[pre_env['agent_types']]
     # ego is last agent in simulator
@@ -200,6 +208,9 @@ def postprocess_sim_env(
     post_env['lanes'] = compact_centerlines 
     post_env['lane_graph'] = compact_G
     post_env['num_lanes'] = len(post_env['lanes'])
+    for key in ['cam_infos', 'ego_state_og']:
+        if key in pre_env:
+            post_env[key] = pre_env[key]
 
     return post_env
 
@@ -616,10 +627,12 @@ def sample_route(d, dataset, heading_tolerance=np.pi/3, num_points_in_route=1000
         if target != start_lane:
             paths.extend(nx.all_simple_paths(G, start_lane, target))
     
+    # front-only nuPlan scenes (lg_type 2) span x in [0, 64] m instead of [-32, 32] m, so their borders are shifted
+    border_shift = np.array([32., 0.]) if dataset != 'waymo' and d.get('lg_type') == 2 else np.zeros(2)
     valid_paths = []
     for path in paths:
         last_lane = path[-1]
-        if not (_near_border(lanes[last_lane, -1]) and _valid_route_end(last_lane, lanes[last_lane])):
+        if not (_near_border(lanes[last_lane, -1] - border_shift) and _valid_route_end(last_lane, lanes[last_lane] - border_shift)):
             continue 
         valid_paths.append(path)
 

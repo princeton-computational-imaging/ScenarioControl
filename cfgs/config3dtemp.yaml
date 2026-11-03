@@ -44,6 +44,24 @@ generate_nuplan_dataset_temp:
   subsample: True # whether to subsample frames by subsample_ratio
   filter_cam: True # whether to skip sequences with missing camera files / no CAM_F0
 
+generate_scene: # generate_scene.py: scenes from one image or one BEV prompt, no dataset needed
+  image: null # front-camera image (any size; centre-cropped to 16:9) -> image-conditioned scene of the road ahead
+  prompt: null # BEV layout description ("ROAD & CONTROL: ... AGENTS: ...") -> prompt-conditioned scene around the ego
+  num_samples: 4 # scenes to generate (one batch); samples differ in noise and in their lane/agent counts
+  map_id: null # nuPlan city index (0-3) for the scene embedding and the lane/agent count prior; null cycles through all four
+  scene_type: null # 0: 64x64 m around the ego, 2: 64x64 m ahead of it; null: the type each LDM was fine-tuned on (2 for image, 0 for prompt)
+  num_agents: null # agents per scene, including the ego (the number of lanes is then drawn given it); null draws both from the prior
+  img_cond_ckpt: ${scratch_root}/checkpoints/scenario_control_ldm_img_cond_nuplan/last.ckpt
+  prompt_cond_ckpt: ${scratch_root}/checkpoints/scenario_control_ldm_prompt_cond_nuplan/last.ckpt
+  prob_matrix_regular: ${ldm.eval.init_prob_matrix_path} # P(num lanes, num agents | city) for scenes around the ego
+  prob_matrix_front: ${project_root}/metadata/initial_prob_matrix_nuplan_front.pt # same, for scenes ahead of the ego
+
+postprocess_sim_envs:
+  pre_path: ${scratch_root}/checkpoints/${ldm.eval.run_name}/initial_scene_samples # generated scenes (test.py ldm.eval.cache_samples=True). eval.py mode=simulation_environments is Scenario Dreamer 2D code and not supported for ScenarioControl models
+  post_path: ${scratch_root}/simulation_environment_datasets/scenario_control_${dataset_name.name}_pickles # simulator-ready scenes (= sim.dataset_path)
+  route_length: 30 # ego route length (m); shorter routes are skipped. Single 64 m scenes from test.py give routes of ~32 m
+  max_num_envs: -1 # if -1, process all environments, otherwise process only the first max_num_envs environments
+
 model_name: autoencoder # or ldm
 dimension: 3d
 ckpt_path: null # path to the checkpoint to evaluate, only used for evaluation
@@ -65,6 +83,8 @@ defaults:
   - model@ldm.model:      ${dataset_name}_ldm
   - datamodule@ldm.datamodule: ${dataset_name}_ldm
   - model@ldm.text_encoder: umt5-xxl
+  - dataset@ctrl_sim.dataset: waymo_ctrl_sim # the released CtRL-Sim behaviour model is Waymo-trained
+  - sim: base
 
 ldm:
   model:

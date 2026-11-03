@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "scenariocontrol-video"
+version = "0.1.0"
+description = "ScenarioControl video generation: BEV rollouts / wireframes -> front-camera driving video with Cosmos3-Nano."
+readme = "README.md"
+requires-python = ">=3.13"
+license-files = ["NOTICE", "LICENSE-OpenMDW-1.1"]
+authors = [{ name = "The ScenarioControl Authors" }]
+dependencies = [
+    # Pinned: the training checkpoint layout and the sampling API follow this commit.
+    "cosmos-framework @ git+https://github.com/NVIDIA/cosmos-framework@fa63e9934a38eb8127a0c3d6b23969fd4d0e32a7",
+    "torch>=2.8",
+    "huggingface_hub>=0.30",
+    "safetensors>=0.4",
+    "numpy",
+    "opencv-python-headless>=4.10",
+    "imageio-ffmpeg",
+    # Imported by cosmos-framework at inference time but only declared in its "train" extra.
+    "iopath",
+    "multi-storage-client==0.44.0",
+    "boto3",
+    "pandas",
+    "wandb",
+    "qwen-vl-utils",
+    "webdataset",
+    "matplotlib",
+    "pytz",
+    "av==16.1.0",  # torchvision 0.25 read_video passes an argument av>=17 removed
+]
+
+[project.optional-dependencies]
+lowvram = ["torchao==0.16.0"]  # int8 base weights for 32 GB GPUs
+test = ["pytest"]
+
+[project.scripts]
+scenariocontrol = "scenariocontrol_video.cli:main"
+
+[project.urls]
+Homepage = "https://princeton-computational-imaging.github.io/ScenarioControl/"
+Repository = "https://github.com/princeton-computational-imaging/ScenarioControl"
+
+[tool.setuptools.packages.find]
+include = ["scenariocontrol_video*"]
+
+[tool.setuptools.package-data]
+scenariocontrol_video = ["configs/*.toml"]

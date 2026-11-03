@@ -177,8 +177,8 @@ def forward_k_disks(states, actions, vocab, delta_t, exists):
                            states[:, 5],
                            states[:, 6],
                            next_exists]).transpose(1, 0)
-    
-    return next_state
+    # carry any extra per-agent columns (e.g. z, height) through unchanged
+    return np.concatenate([next_state, states[:, 8:]], axis=1)
 
 
 def inverse_k_disks(states, next_states, vocab):

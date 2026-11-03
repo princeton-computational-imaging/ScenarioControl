@@ -109,8 +109,21 @@ def flash_attention(
             softmax_scale=softmax_scale,
             causal=causal,
             deterministic=deterministic)[0].unflatten(0, (b, lq))
+    elif not FLASH_ATTN_2_AVAILABLE:
+        # flash-attn is optional: same varlen attention via PyTorch SDPA, one sequence at a time (slower)
+        assert window_size == (-1, -1) and not (causal and lq != lk), 'SDPA fallback: no sliding window or bottom-right causal'
+        cu_q = [0] + q_lens.cumsum(0).tolist()
+        cu_k = [0] + k_lens.cumsum(0).tolist()
+        x = torch.cat([
+            torch.nn.functional.scaled_dot_product_attention(
+                q[cu_q[i]:cu_q[i + 1]].transpose(0, 1),
+                k[cu_k[i]:cu_k[i + 1]].transpose(0, 1),
+                v[cu_k[i]:cu_k[i + 1]].transpose(0, 1),
+                dropout_p=dropout_p, is_causal=causal, scale=softmax_scale).transpose(0, 1)
+            for i in range(b)])
+        if unflatten:
+            x = x.unflatten(0, (b, lq))
     else:
-        assert FLASH_ATTN_2_AVAILABLE
         x = flash_attn.flash_attn_varlen_func(
             q=q,
             k=k,

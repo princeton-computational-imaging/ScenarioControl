@@ -43,7 +43,11 @@ class ScenarioControlLDM(pl.LightningModule):
         self.autoencoder = ScenarioControlAutoEncoder.load_from_checkpoint(self.cfg_model.autoencoder_path, cfg=cfg_ae, map_location='cpu')
         
         self.init_prob_matrix = torch.load(self.cfg.eval.init_prob_matrix_path)
-        self.ema = ExponentialMovingAverage(self.diff_model.parameters(), decay=self.cfg.train.ema_decay)
+        # EMA over the diffusion model only: with decode_in_training=True, diff_model also holds a frozen copy
+        # of the autoencoder, which the released checkpoints' EMA does not include
+        self.ema = ExponentialMovingAverage(
+            [p for n, p in self.diff_model.named_parameters() if not n.startswith('autoencoder.')],
+            decay=self.cfg.train.ema_decay)
 
         # materializes self.diff_model.text_encoder; no-ops when text_conditioning=False or use_cached_text_embeds=True
         self.diff_model.load_text_encoder()
@@ -640,7 +644,7 @@ class ScenarioControlLDM(pl.LightningModule):
         if num_saved != num_current:
             print(f"[on_load_checkpoint] Skipping EMA restore: checkpoint has {num_saved} EMA "
                   f"parameters, current model has {num_current} (architecture mismatch, likely an "
-                  f"older checkpoint). Falling back to a fresh EMA copy of the loaded raw weights.")
+                  f"older checkpoint). The EMA keeps the model's initial weights, so do not sample with it.")
             return
         self.ema.load_state_dict(ema_state_dict)
 

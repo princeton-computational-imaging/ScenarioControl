@@ -218,6 +218,8 @@ def get_causal_mask(cfg, num_timesteps, num_types):
                 and index_j % num_types == state_index):
                 mask[index_i, index_j] = 0.
 
+    return mask
+
 
 def normalize_key(name: str) -> str:
     """Strip common wrapper prefixes (DDP/torch.compile) so checkpoint state_dict keys and

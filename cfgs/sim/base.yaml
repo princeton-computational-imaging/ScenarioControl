@@ -1,0 +1,26 @@
+seed: 0 # base random seed; run k of a scenario uses seed + k
+num_seeds: 1 # number of rollouts (seeds) per scenario
+task_id: null # if set, only process scenarios with index % num_tasks == task_id (e.g. a Slurm array task)
+num_tasks: 1 # number of parallel tasks the scenarios are split across (used with task_id)
+dataset_path: ${scratch_root}/simulation_environment_datasets/scenario_control_nuplan_pickles # input directory of simulation environment .pkl files
+visualize: False # save a BEV mp4 per rollout?
+lightweight: False # lightweight visualization (runs faster, less dpi and lower frame rate)
+movie_path: ${sim.output_dir}/movies # path to save visualization movies
+verbose: True # report metrics after each simulation?
+steps: 40 # simulation steps per rollout (frames written = steps + 1). Must be >= 32, the CtRL-Sim context length
+dt: 0.1 # time delta between simulation steps (s)
+stop_on_termination: True # stop a rollout early on ego collision / off-route / route completion (set False for fixed-length sequences)
+save_sequence: True # save each rollout as <output_dir>/<scenario>_seed<k>/frame_XXXX.pkl?
+output_dir: ${scratch_root}/rollouts # directory to save rollout frame sequences
+# agent removal (defaults reproduce stock CtRL-Sim simulation)
+keep_agents_leaving_fov: False # if True, agents stay in the scene after leaving the agent FOV around the ego (the CtRL-Sim context still uses its trained FOV)
+remove_colliding_agents: True # remove CtRL-Sim agents that collide
+remove_offroad_agents: True # remove CtRL-Sim vehicles further than agent_offroad_threshold from any lane centerline
+agent_offroad_threshold: 3.0 # offroad distance threshold (m)
+behaviour_model:
+  model_path: ${scratch_root}/checkpoints/ctrl_sim_waymo/last.ckpt # CtRL-Sim checkpoint (see README, Simulation)
+  tilt: 10 # exponential tilting value for return sampling
+  action_temperature: 1.0 # action sampling temperature
+  use_rtg: True # whether behaviour model conditions on return-to-go
+  predict_rtgs: True # whether behaviour model predicts return-to-go
+  compute_metrics: False # report CtRL-Sim agent collision / offroad rates?

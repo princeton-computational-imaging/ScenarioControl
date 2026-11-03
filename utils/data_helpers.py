@@ -1088,7 +1088,7 @@ def convert_batch_to_scenarios(data, batch_size, batch_idx, cache_dir, condition
             data['lane_ids'] = scene_i_lane_ids
 
         if mode != 'inpainting':
-            scenario_id = f"{i}_{batch_idx}" if raw_file_names is None else raw_file_names[batch_idx]
+            scenario_id = f"{i}_{batch_idx}" if raw_file_names is None else raw_file_names[i]
         else:
             scenario_id = conditioning_filenames[int(batch_idx * batch_size + i)]
         filename = f"{scenario_id}.pkl"

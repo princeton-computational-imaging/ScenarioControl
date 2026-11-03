@@ -14,15 +14,17 @@ from utils.train_helpers import set_latent_stats
 from torch_geometric.loader import DataLoader
 
 
-def test_ldm(cfg, cfg_ae, save_dir=None):
+def test_ldm(cfg, cfg_ae, save_dir=None, test_set=None):
     """ Generate image-conditioned samples from the ScenarioControl Latent Diffusion Model,
-    seeded from real reference scenes (see datasets.nuplan.dataset_ldm_nuplan_init)."""
+    seeded from real reference scenes (see datasets.nuplan.dataset_ldm_nuplan_init), or from
+    `test_set` if given (see generate_scene.py)."""
     cfg = set_latent_stats(cfg)
 
     if cfg.dataset_name != "nuplan":
         raise NotImplementedError("test.py currently only supports dataset_name=nuplan.")
 
-    test_set = NuplanDatasetLDMInit(cfg.dataset, split_name="test")
+    if test_set is None:
+        test_set = NuplanDatasetLDMInit(cfg.dataset, split_name="test")
     test_loader = DataLoader(test_set, batch_size=cfg.datamodule.test_batch_size, shuffle=False)
 
     ckpt_path = cfg.ckpt_path

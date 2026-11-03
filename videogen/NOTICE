@@ -1,0 +1,22 @@
+ScenarioControl video generation (videogen/)
+
+Parts of this package are adapted from NVIDIA cosmos-framework
+(https://github.com/NVIDIA/cosmos-framework, commit fa63e9934a38eb8127a0c3d6b23969fd4d0e32a7),
+Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES, licensed under the OpenMDW License
+Agreement, version 1.1 (see LICENSE-OpenMDW-1.1). These files keep NVIDIA's SPDX headers
+and say what was changed:
+  scenariocontrol_video/model.py     (OmniMoTModel.build_net)
+  scenariocontrol_video/pipeline.py  (inference/transfer.py: generate_transfer_sample)
+  scenariocontrol_video/dataset.py   (data/vfm/local_datasets/sft_dataset.py)
+
+The package depends on, but does not include:
+  - NVIDIA cosmos-framework (OpenMDW-1.1), installed from GitHub at the commit above.
+  - NVIDIA Cosmos3-Nano weights (https://huggingface.co/nvidia/Cosmos3-Nano, OpenMDW-1.1),
+    downloaded from the Hugging Face Hub at a pinned revision.
+  - Wan2.2 VAE (https://huggingface.co/Wan-AI/Wan2.2-TI2V-5B, Apache-2.0).
+  - Qwen3-VL-8B-Instruct processor (https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct, Apache-2.0).
+
+The fine-tuned weights (https://huggingface.co/pci-lab/scenariocontrol-videogen) were trained
+on the nuPlan dataset (c) Motional, CC BY-NC-SA 4.0 plus the nuPlan Terms of Use
+(https://www.nuscenes.org/terms-of-use). They, and videos generated with them, are for
+non-commercial use only. See the NOTICE in that repository.
